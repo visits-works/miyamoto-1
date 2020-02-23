@@ -62,6 +62,37 @@ loadDateUtils = function () {
     return null;
   };
 
+  // テキストから休憩時間を抽出
+  DateUtils.parseMinutes = function(str) {
+    str = String(str || "").toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+    var reg = /(\d*.\d*\s*(分|minutes?|mins|時間|hour|hours))(\d*(分|minutes?|mins))?/;
+    var matches = str.match(reg);
+    if(matches) {
+      var hour = 0;
+      var min = 0;
+
+      // 最初のマッチ
+      if(matches[1] != null) {
+        if (['時間','hour','hours'].includes(matches[2])) {
+          // 1.5 時間
+          hour = parseFloat(matches[1], 10);
+          // 2回めのマッチ
+          if(matches[3] != null) {
+            min = parseInt(matches[3], 10);
+          }
+        } else {
+          // 60 分
+          min = parseInt(matches[1], 10);
+        }
+      }
+
+      return [hour * 60 + min];
+    }
+    return null;
+  };
+  
   // テキストから日付を抽出
   DateUtils.parseDate = function(str) {
     str = String(str || "").toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
