@@ -42,7 +42,6 @@ loadTimesheets = function (exports) {
     var command = _.find(commands, function(ary) {
       return(ary && message.match(ary[1]));
     });
-    console.log(command);
 
     // メッセージを実行
     if(command && this[command[0]]) {
@@ -88,27 +87,15 @@ loadTimesheets = function (exports) {
 
   // 休憩
   Timesheets.prototype.actionBreak = function(username, time) {
-    console.log('--------------actionBreak!!')
-    console.log(this.date);
     if (this.minutes) {
-      console.log(this.datetime);
       var data = this.storage.get(username, this.datetime);
-      console.log(data);
       if(!data.signIn || data.signIn === '-') {
         // まだ出勤前である
         this.responder.template("休憩エラー", username );
       } else {
-        if(!data.break || data.break === '-') {
-          this.storage.set(username, this.minutes, {break: this.minutes});
-          this.responder.template("休憩", username, this.minutes + "分");
-        }
-        else {
-          // 更新の場合は時間を明示する必要がある
-          if(!!this.minutes) {
-            this.storage.set(username, this.minutes, {break: this.minutes});
-            this.responder.template("休憩更新", username, this.minutes + "分");
-          }
-        }
+        // break 入力
+        this.storage.set(username, this.datetime, {break: this.minutes});
+        this.responder.template("休憩", username, this.minutes + "分");
       }
     }
   };
