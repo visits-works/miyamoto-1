@@ -464,7 +464,7 @@ loadGSTimesheets = function () {
         { name: '日付' },
         { name: '出勤' },
         { name: '退勤' },
-        { name: '休憩' },
+        { name: '休憩(分)' },
         { name: 'ノート' },
       ],
       properties: [
