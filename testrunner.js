@@ -5,7 +5,9 @@ var runner = require("./node_modules/qunit");
 runner.setup({
   log: {
     assertions: true,
-    summary: true
+    summary: true,
+    coverage: true,
+    errors: true
   }
 });
 
@@ -34,4 +36,6 @@ runner.run([
       "./scripts/date_utils.js",
     ]
   }
-]);
+], function(err, report) {
+  console.dir(report);
+});
