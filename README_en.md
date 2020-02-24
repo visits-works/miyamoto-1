@@ -2,7 +2,7 @@
 
 - [Japanese README](README.md)
 
-This is a timesheet app integrated with Slack, written by Google Apps Script.
+This is a Slack-bot timesheet app written as Google Apps Script.
 
 We forked [Original version](https://github.com/masuidrive/miyamoto) to use it for Georepublic.
 
@@ -18,8 +18,8 @@ You can say like below for tracking your working times in Slack.
 - morning 10/2 12:00 ← You can set start working time with past date and time
 - see you ← Stop working with current time
 - bye 20:00 ← Stop working with the specified time 
-- 明日はお休みです ← Decrare a day off
-- 10/1はお休みです ← Decrare a day off
+- 明日はお休みです ← Declare a day off
+- 10/1はお休みです ← Declare a day off
 - 明日のお休みを取り消します ← Cancel a day off
 - 明日はやっぱり出勤します ← Cancel a day off
 - whois ← List of working people
@@ -40,13 +40,13 @@ Feel free to add/modify it!
 
 ## 仕様/Limitation
 
-- Slack user name should not contain `.`(dot). Mentioning will be failed.
+- Slack user name must not contain `.`(dot). Mentioning will fail.
 
 # 開発/Development
 
-If you push your code to the master branch, the script will automatically deployed to the Google App Script.
+If you push your code to the master branch, the script will automatically deploy as Google App Script.
 
-Please don't modify main.gs directory. it will be created by `make upload` command during the deployment process.
+Please don't modify `main.gs` directory. It will be created by `make upload` command during the deployment process.
 
 Please see [DEVELOPMENT.md](DEVELOPMENT.md) for the development details.
 
@@ -63,37 +63,37 @@ make test
 
 ## Files
 
-- main.js
+- `main.js`
   - HTTP handler
 
-- timesheets.js
+- `timesheets.js`
   - Read inputs and call methods
 
-- slack.js
+- `slack.js`
   - Input/Output from/to Slack
 
-- gs_template.js
+- `gs_template.js`
   - Message template handler using Google Spreadsheet
 
-- gs_properties.js
+- `gs_properties.js`
   - Key/Value store of settings using Google Spreadsheet
 
-- gs_timesheets.js
+- `gs_timesheets.js`
   - Save timesheet data on the Google Spreadsheet
 
-- gas_properties.js
+- `gas_properties.js`
   - Key/Value store of settings using Google Apps Script
 
-- gas_utils.js
+- `gas_utils.js`
   - Utilities for Google Apps Script
 
-- utils.js
+- `utils.js`
   - Utilities of global
 
-- date_utils.js
+- `date_utils.js`
   - Date time utilities
 
-- underscore.js
+- `underscore.js`
   - Utilities starting from _.
   - http://underscorejs.org
 
