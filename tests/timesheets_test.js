@@ -36,7 +36,7 @@ QUnit.test( "Timesheets", function(assert) {
     set: function(username, date, params) {
       var row = this.get(username, date);
       row.user = username;
-      _.extend(row, _.pick(params, 'signIn', 'signOut', 'note'));
+      _.extend(row, _.pick(params, 'signIn', 'signOut','break', 'note'));
       this.data[username][String(DateUtils.toDate(date))] = row;
       return row;
     },
@@ -141,6 +141,12 @@ QUnit.test( "Timesheets", function(assert) {
   storageTest({'test1': test1}, function(msgTest) {
     msgTest('test1', 'おつ', []);
     msgTest('test1', 'お疲れさま 14:56', [['退勤更新', 'test1', "2014/01/02 14:56"]]);
+  });
+
+  // 休憩時間(出勤前)
+  storageTest({}, function(msgTest) {
+    console.log('storageTest: 休憩30分')
+    msgTest('test1', '休憩 30分', [['休憩エラー', 'test1']]);
   });
 
   // 休暇申請

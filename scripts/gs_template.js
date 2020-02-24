@@ -16,16 +16,19 @@ loadGSTemplate = function() {
         var now = DateUtils.now();
         this.sheet.getRange("A1:L2").setValues([
           [
-            "出勤", "出勤更新", "退勤", "退勤更新", "休暇", "休暇取消",
-            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認"
+            "出勤", "出勤更新", "退勤", "退勤更新", "休憩", "休暇", "休暇取消",
+            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認",
+            "休暇エラー"
           ],
           [
             "<@#1> Good morning (#2)!", "<@#1> I changed starting time to #2",
             "<@#1> Great work! (#2)", "<@#1> I changed leaving time to #2",
+            "<@#1> I changed break time to #2",
             "<@#1> I registered a holiday for #2", "<@#1> I canceled holiday #2",
             "#1 is working", "All staffs are working",
             "#2 is having a holiday at #1", "No one is having a holiday at #1",
-            "Is today holiday? #1", "Did you finish working today? #1"
+            "Is today holiday? #1", "Did you finish working today? #1",
+            "[Error] You have not started working today!"
           ]
         ]);
       }

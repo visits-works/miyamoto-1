@@ -18,6 +18,7 @@ loadTimesheets = function (exports) {
     // 日付は先に処理しておく
     this.date = DateUtils.parseDate(message);
     this.time = DateUtils.parseTime(message);
+    this.minutes = DateUtils.parseMinutes(message)
     this.datetime = DateUtils.normalizeDateTime(this.date, this.time);
     if(this.datetime !== null) {
       this.dateStr = DateUtils.format("Y/m/d", this.datetime);
@@ -29,6 +30,7 @@ loadTimesheets = function (exports) {
       ['actionSignOut', /(バ[ー〜ァ]*イ|ば[ー〜ぁ]*い|おやすみ|お[つっ]ー|おつ|さらば|お先|お疲|帰|乙|bye|night|(c|see)\s*(u|you)|left|退勤|ごきげんよ|グ[ッ]?バイ)/],
       ['actionWhoIsOff', /(だれ|誰|who\s*is).*(休|やす(ま|み|む))/],
       ['actionWhoIsIn', /(だれ|誰|who\s*is)/],
+      ['actionBreak', /(休憩|break)/],
       ['actionCancelOff', /(休|やす(ま|み|む)|休暇).*(キャンセル|消|止|やめ|ません)/],
       ['actionOff', /(休|やす(ま|み|む)|休暇)/],
       ['actionSignIn', /(モ[ー〜]+ニン|も[ー〜]+にん|おっは|おは|へろ|はろ|ヘロ|ハロ|hi|hello|morning|ohayo|出勤)/],
@@ -40,6 +42,7 @@ loadTimesheets = function (exports) {
     var command = _.find(commands, function(ary) {
       return(ary && message.match(ary[1]));
     });
+    console.log(command);
 
     // メッセージを実行
     if(command && this[command[0]]) {
@@ -78,6 +81,33 @@ loadTimesheets = function (exports) {
         if(!!this.time) {
           this.storage.set(username, this.datetime, {signOut: this.datetime});
           this.responder.template("退勤更新", username, this.datetimeStr);
+        }
+      }
+    }
+  };
+
+  // 休憩
+  Timesheets.prototype.actionBreak = function(username, time) {
+    console.log('--------------actionBreak!!')
+    console.log(this.date);
+    if (this.minutes) {
+      console.log(this.datetime);
+      var data = this.storage.get(username, this.datetime);
+      console.log(data);
+      if(!data.signIn || data.signIn === '-') {
+        // まだ出勤前である
+        this.responder.template("休憩エラー", username );
+      } else {
+        if(!data.break || data.break === '-') {
+          this.storage.set(username, this.minutes, {break: this.minutes});
+          this.responder.template("休憩", username, this.minutes + "分");
+        }
+        else {
+          // 更新の場合は時間を明示する必要がある
+          if(!!this.minutes) {
+            this.storage.set(username, this.minutes, {break: this.minutes});
+            this.responder.template("休憩更新", username, this.minutes + "分");
+          }
         }
       }
     }

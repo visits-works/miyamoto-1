@@ -46,12 +46,12 @@ loadGSProperties = function (exports) {
       var vals = this.sheet.getRange("A1:A"+this.sheet.getLastRow()).getValues();
       for(var i = 0; i < this.sheet.getLastRow(); ++i) {
         if(vals[i][0] == key) {
-          this.sheet.getRange("C"+(i+1)).setValue(note);
+          this.sheet.getRange("D"+(i+1)).setValue(note);
           return;
         }
       }
     }
-    this.sheet.getRange("A"+(this.sheet.getLastRow()+1)+":C"+(this.sheet.getLastRow()+1)).setValues([[key, '', note]]);
+    this.sheet.getRange("A"+(this.sheet.getLastRow()+1)+":D"+(this.sheet.getLastRow()+1)).setValues([[key, '', note]]);
     return;
   };
 
