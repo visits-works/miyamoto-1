@@ -65,6 +65,37 @@ loadDateUtils = function () {
     return null;
   };
 
+  // テキストから休憩時間を抽出
+  DateUtils.parseMinutes = function(str) {
+    str = String(str || "").toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+    var reg = /(\d*.\d*\s*(分|minutes?|mins|時間|hour|hours))(\d*(分|minutes?|mins))?/;
+    var matches = str.match(reg);
+    if(matches) {
+      var hour = 0;
+      var min = 0;
+
+      // 最初のマッチ
+      if(matches[1] != null) {
+        if (['時間','hour','hours'].includes(matches[2])) {
+          // 1.5 時間
+          hour = parseFloat(matches[1], 10);
+          // 2回めのマッチ
+          if(matches[3] != null) {
+            min = parseInt(matches[3], 10);
+          }
+        } else {
+          // 60 分
+          min = parseInt(matches[1], 10);
+        }
+      }
+
+      return [hour * 60 + min];
+    }
+    return null;
+  };
+  
   // テキストから日付を抽出
   DateUtils.parseDate = function(str) {
     str = String(str || "").toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
@@ -327,12 +358,12 @@ loadGSProperties = function (exports) {
       var vals = this.sheet.getRange("A1:A"+this.sheet.getLastRow()).getValues();
       for(var i = 0; i < this.sheet.getLastRow(); ++i) {
         if(vals[i][0] == key) {
-          this.sheet.getRange("C"+(i+1)).setValue(note);
+          this.sheet.getRange("D"+(i+1)).setValue(note);
           return;
         }
       }
     }
-    this.sheet.getRange("A"+(this.sheet.getLastRow()+1)+":C"+(this.sheet.getLastRow()+1)).setValues([[key, '', note]]);
+    this.sheet.getRange("A"+(this.sheet.getLastRow()+1)+":D"+(this.sheet.getLastRow()+1)).setValues([[key, '', note]]);
     return;
   };
 
@@ -360,16 +391,19 @@ loadGSTemplate = function() {
         var now = DateUtils.now();
         this.sheet.getRange("A1:L2").setValues([
           [
-            "出勤", "出勤更新", "退勤", "退勤更新", "休暇", "休暇取消",
-            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認"
+            "出勤", "出勤更新", "退勤", "退勤更新", "休憩", "休暇", "休暇取消",
+            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認",
+            "休暇エラー"
           ],
           [
             "<@#1> Good morning (#2)!", "<@#1> I changed starting time to #2",
             "<@#1> Great work! (#2)", "<@#1> I changed leaving time to #2",
+            "<@#1> I changed break time to #2",
             "<@#1> I registered a holiday for #2", "<@#1> I canceled holiday #2",
             "#1 is working", "All staffs are working",
             "#2 is having a holiday at #1", "No one is having a holiday at #1",
-            "Is today holiday? #1", "Did you finish working today? #1"
+            "Is today holiday? #1", "Did you finish working today? #1",
+            "[Error] You have not started working today!"
           ]
         ]);
       }
@@ -430,6 +464,7 @@ loadGSTimesheets = function () {
         { name: '日付' },
         { name: '出勤' },
         { name: '退勤' },
+        { name: '休憩' },
         { name: 'ノート' },
       ],
       properties: [
@@ -487,17 +522,17 @@ loadGSTimesheets = function () {
       return v === '' ? undefined : v;
     });
 
-    return({ user: username, date: row[0], signIn: row[1], signOut: row[2], note: row[3] });
+    return({ user: username, date: row[0], signIn: row[1], signOut: row[2], break: row[3], note: row[4] });
   };
 
   GSTimesheets.prototype.set = function(username, date, params) {
     var row = this.get(username, date);
-    _.extend(row, _.pick(params, 'signIn', 'signOut', 'note'));
+    _.extend(row, _.pick(params, 'signIn', 'signOut', 'break', 'note'));
 
     var sheet = this._getSheet(username);
     var rowNo = this._getRowNo(username, date);
 
-    var data = [DateUtils.toDate(date), row.signIn, row.signOut, row.note].map(function(v) {
+    var data = [DateUtils.toDate(date), row.signIn, row.signOut, row.break, row.note].map(function(v) {
       return v == null ? '' : v;
     });
     sheet.getRange("A"+rowNo+":"+String.fromCharCode(65 + this.scheme.columns.length - 1)+rowNo).setValues([data]);
@@ -733,6 +768,7 @@ loadTimesheets = function (exports) {
     // 日付は先に処理しておく
     this.date = DateUtils.parseDate(message);
     this.time = DateUtils.parseTime(message);
+    this.minutes = DateUtils.parseMinutes(message)
     this.datetime = DateUtils.normalizeDateTime(this.date, this.time);
     if(this.datetime !== null) {
       this.dateStr = DateUtils.format("Y/m/d", this.datetime);
@@ -744,6 +780,7 @@ loadTimesheets = function (exports) {
       ['actionSignOut', /(バ[ー〜ァ]*イ|ば[ー〜ぁ]*い|おやすみ|お[つっ]ー|おつ|さらば|お先|お疲|帰|乙|bye|night|(c|see)\s*(u|you)|left|退勤|ごきげんよ|グ[ッ]?バイ)/],
       ['actionWhoIsOff', /(だれ|誰|who\s*is).*(休|やす(ま|み|む))/],
       ['actionWhoIsIn', /(だれ|誰|who\s*is)/],
+      ['actionBreak', /(休憩|break)/],
       ['actionCancelOff', /(休|やす(ま|み|む)|休暇).*(キャンセル|消|止|やめ|ません)/],
       ['actionOff', /(休|やす(ま|み|む)|休暇)/],
       ['actionSignIn', /(モ[ー〜]+ニン|も[ー〜]+にん|おっは|おは|へろ|はろ|ヘロ|ハロ|hi|hello|morning|ohayo|出勤)/],
@@ -794,6 +831,21 @@ loadTimesheets = function (exports) {
           this.storage.set(username, this.datetime, {signOut: this.datetime});
           this.responder.template("退勤更新", username, this.datetimeStr);
         }
+      }
+    }
+  };
+
+  // 休憩
+  Timesheets.prototype.actionBreak = function(username, time) {
+    if (this.minutes) {
+      var data = this.storage.get(username, this.datetime);
+      if(!data.signIn || data.signIn === '-') {
+        // まだ出勤前である
+        this.responder.template("休憩エラー", username );
+      } else {
+        // break 入力
+        this.storage.set(username, this.datetime, {break: this.minutes});
+        this.responder.template("休憩", username, this.minutes + "分");
       }
     }
   };
