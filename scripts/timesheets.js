@@ -91,7 +91,7 @@ loadTimesheets = function (exports) {
       var data = this.storage.get(username, this.datetime);
       if(!data.signIn || data.signIn === '-') {
         // まだ出勤前である
-        this.responder.template("休憩エラー", username );
+        this.responder.template("休憩エラー", username, "" );
       } else {
         // break 入力
         this.storage.set(username, this.datetime, {break: this.minutes});

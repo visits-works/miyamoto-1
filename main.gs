@@ -389,11 +389,11 @@ loadGSTemplate = function() {
       }
       else {
         var now = DateUtils.now();
-        this.sheet.getRange("A1:L2").setValues([
+        this.sheet.getRange("A1:N2").setValues([
           [
             "出勤", "出勤更新", "退勤", "退勤更新", "休憩", "休暇", "休暇取消",
             "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認",
-            "休暇エラー"
+            "休憩エラー"
           ],
           [
             "<@#1> Good morning (#2)!", "<@#1> I changed starting time to #2",
@@ -841,7 +841,7 @@ loadTimesheets = function (exports) {
       var data = this.storage.get(username, this.datetime);
       if(!data.signIn || data.signIn === '-') {
         // まだ出勤前である
-        this.responder.template("休憩エラー", username );
+        this.responder.template("休憩エラー", username, "" );
       } else {
         // break 入力
         this.storage.set(username, this.datetime, {break: this.minutes});
