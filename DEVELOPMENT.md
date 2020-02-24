@@ -98,3 +98,14 @@ Please say `hi` on your test channel. The bot will create new record on the time
 That's All! Pull Requests are very welcome!
 
 You can find additional inormation from [Original Repos](https://github.com/masuidrive/miyamoto)
+
+
+## Update script
+
+When you update the Google Apps Script, you have to create new version for enabling the modification for the API.
+
+1. Run `make dev` and upload the new main.gs.
+2. Open your Google Apps script
+3. Make a new version from `menu -> manage versions -> save new version`
+4. Publish new version from `menu -> Publish -> Deploy as web app` and select the latest version.
+
