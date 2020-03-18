@@ -1,3 +1,8 @@
+# Environment info
+
+Google Script: https://script.google.com/a/georepublic.de/d/1AjXYh64xSZDxWJLe8sSzU4gn2fyN5XKAaKYz5cCq9j7Djlh6tZkEKA7o/edit?usp=drive_web
+Time sheet: https://docs.google.com/spreadsheets/d/12brcISXijWvdK6X3qDxk7E5fvD7D8QrJKM09DqbCR_Q/edit#gid=0
+
 # 勤怠管理bot - みやもとさん
 
 - [English README](README_en.md)
@@ -10,7 +15,6 @@ Georepublic Japan 内での利用用にカスタマイズしています。
 Slackで下記の様につぶやくと、みやもとさんがGoogle Spreadsheetに勤怠を記録してくれます。
 
 ![demo1](https://raw.githubusercontent.com/masuidrive/miyamoto/master/docs/images/demo1.png)
-
 
 ## 会話例/Examples
 
