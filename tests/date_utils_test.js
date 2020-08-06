@@ -12,6 +12,20 @@ QUnit.test( "DateUtils.parseTime", function(assert) {
   assert.ok(_.isEqual(null, DateUtils.parseTime("お昼")), "お昼");
 });
 
+QUnit.test( "DateUtils.parseMinutes", function(assert) {
+  assert.ok(_.isEqual([90], DateUtils.parseMinutes("90分")), "90分");
+  assert.ok(_.isEqual([90], DateUtils.parseMinutes("90 minutes")), "90 minutes");
+  assert.ok(_.isEqual([90], DateUtils.parseMinutes("90 mins")), "90 mins");
+  assert.ok(_.isEqual([1], DateUtils.parseMinutes("1 minute")), "1 minute");
+  assert.ok(_.isEqual([90], DateUtils.parseMinutes("90 mins")), "90 mins");
+  assert.ok(_.isEqual([90], DateUtils.parseMinutes("1.5時間")), "1.5時間");
+  assert.ok(_.isEqual([60], DateUtils.parseMinutes("1時間")), "1時間");
+  assert.ok(_.isEqual([60], DateUtils.parseMinutes("1 hour")), "1 hour");
+  assert.ok(_.isEqual([60], DateUtils.parseMinutes("60分")), "60分");
+  assert.ok(_.isEqual([120], DateUtils.parseMinutes("2 hours")), "2 hours");
+  assert.ok(_.isEqual([135], DateUtils.parseMinutes("2時間15分")), "2時間15分");
+});
+
 QUnit.test( "DateUtils.parseDate", function(assert) {
   DateUtils.now(new Date(2016, 1-1, 1, 0, 0, 0));
   assert.ok(_.isEqual([2015,12,1], DateUtils.parseDate("12/1")), "12/1");

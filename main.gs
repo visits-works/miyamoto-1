@@ -29,8 +29,8 @@ loadDateUtils = function () {
 
       // 1時20, 2:30, 3:00pm
       if(matches[2] != null) {
-        hour = parseInt(matches[2]);
-        min = parseInt(matches[3] ? matches[3] : '0');
+        hour = parseInt(matches[2], 10);
+        min = parseInt((matches[3] ? matches[3] : '0'), 10);
         if(_.contains(['pm'], matches[4])) {
           hour += 12;
         }
@@ -38,8 +38,8 @@ loadDateUtils = function () {
 
       // 午後1 午後2時30 pm3
       if(matches[5] != null) {
-        hour = parseInt(matches[6]);
-        min = parseInt(matches[8] ? matches[8] : '0');
+        hour = parseInt(matches[6], 10);
+        min = parseInt((matches[8] ? matches[8] : '0'), 10);
         if(_.contains(['pm', '午後'], matches[5])) {
           hour += 12;
         }
@@ -47,8 +47,8 @@ loadDateUtils = function () {
 
       // 1am 2:30pm
       if(matches[9] != null) {
-        hour = parseInt(matches[9]);
-        min = parseInt(matches[11] ? matches[11] : '0');
+        hour = parseInt(matches[9], 10);
+        min = parseInt((matches[11] ? matches[11] : '0'), 10);
         if(_.contains(['pm'], matches[12])) {
           hour += 12;
         }
@@ -56,7 +56,7 @@ loadDateUtils = function () {
 
       // 14時
       if(matches[13] != null) {
-        hour = parseInt(matches[13]);
+        hour = parseInt(matches[13], 10);
         min = 0;
       }
 
@@ -65,6 +65,37 @@ loadDateUtils = function () {
     return null;
   };
 
+  // テキストから休憩時間を抽出
+  DateUtils.parseMinutes = function(str) {
+    str = String(str || "").toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+    var reg = /(\d*.\d*\s*(分|minutes?|mins|時間|hour|hours))(\d*(分|minutes?|mins))?/;
+    var matches = str.match(reg);
+    if(matches) {
+      var hour = 0;
+      var min = 0;
+
+      // 最初のマッチ
+      if(matches[1] != null) {
+        if (['時間','hour','hours'].includes(matches[2])) {
+          // 1.5 時間
+          hour = parseFloat(matches[1], 10);
+          // 2回めのマッチ
+          if(matches[3] != null) {
+            min = parseInt(matches[3], 10);
+          }
+        } else {
+          // 60 分
+          min = parseInt(matches[1], 10);
+        }
+      }
+
+      return [hour * 60 + min];
+    }
+    return null;
+  };
+  
   // テキストから日付を抽出
   DateUtils.parseDate = function(str) {
     str = String(str || "").toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
@@ -88,9 +119,9 @@ loadDateUtils = function () {
     var reg = /((\d{4})[-\/年]{1}|)(\d{1,2})[-\/月]{1}(\d{1,2})/;
     var matches = str.match(reg);
     if(matches) {
-      var year = parseInt(matches[2]);
-      var month = parseInt(matches[3]);
-      var day = parseInt(matches[4]);
+      var year = parseInt(matches[2], 10);
+      var month = parseInt(matches[3], 10);
+      var day = parseInt(matches[4], 10);
       if(_.isNaN(year) || year < 1970) {
         //
         if((now().getMonth() + 1) >= 11 && month <= 2) {
@@ -264,14 +295,14 @@ checkUpdate = function(responder) {
   if(typeof GASProperties === 'undefined') GASProperties = loadGASProperties();
   var current_version = parseFloat(new GASProperties().get('version')) || 0;
 
-  var response = UrlFetchApp.fetch("https://raw.githubusercontent.com/masuidrive/miyamoto/master/VERSION", {muteHttpExceptions: true});
+  var response = UrlFetchApp.fetch("https://raw.githubusercontent.com/georepublic/miyamoto/master/VERSION", {muteHttpExceptions: true});
 
   if(response.getResponseCode() == 200) {
     var latest_version = parseFloat(response.getContentText());
     if(latest_version > 0 && latest_version > current_version) {
-      responder.send("最新のみやもとさんの準備ができました！\nhttps://github.com/masuidrive/miyamoto/blob/master/UPDATE.md を読んでください。");
+      responder.send("Timesheet Script was updated. \nhttps://github.com/georepublic/miyamoto/blob/master/UPDATE.md を読んでください。");
 
-      var response = UrlFetchApp.fetch("https://raw.githubusercontent.com/masuidrive/miyamoto/master/HISTORY.md", {muteHttpExceptions: true});
+      var response = UrlFetchApp.fetch("https://raw.githubusercontent.com/georepublic/miyamoto/master/HISTORY.md", {muteHttpExceptions: true});
       if(response.getResponseCode() == 200) {
         var text = String(response.getContentText()).replace(new RegExp("## "+current_version+"[\\s\\S]*", "m"), '');
         responder.send(text);
@@ -327,12 +358,12 @@ loadGSProperties = function (exports) {
       var vals = this.sheet.getRange("A1:A"+this.sheet.getLastRow()).getValues();
       for(var i = 0; i < this.sheet.getLastRow(); ++i) {
         if(vals[i][0] == key) {
-          this.sheet.getRange("C"+(i+1)).setValue(note);
+          this.sheet.getRange("D"+(i+1)).setValue(note);
           return;
         }
       }
     }
-    this.sheet.getRange("A"+(this.sheet.getLastRow()+1)+":C"+(this.sheet.getLastRow()+1)).setValues([[key, '', note]]);
+    this.sheet.getRange("A"+(this.sheet.getLastRow()+1)+":D"+(this.sheet.getLastRow()+1)).setValues([[key, '', note]]);
     return;
   };
 
@@ -349,7 +380,7 @@ loadGSTemplate = function() {
   var GSTemplate = function(spreadsheet) {
     this.spreadsheet = spreadsheet;
 
-    // メッセージテンプレート設定
+    // メッセージテンプレート設定 
     this.sheet = this.spreadsheet.getSheetByName('_メッセージ');
     if(!this.sheet) {
       this.sheet = this.spreadsheet.insertSheet('_メッセージ');
@@ -358,18 +389,21 @@ loadGSTemplate = function() {
       }
       else {
         var now = DateUtils.now();
-        this.sheet.getRange("A1:L2").setValues([
+        this.sheet.getRange("A1:N2").setValues([
           [
-            "出勤", "出勤更新", "退勤", "退勤更新", "休暇", "休暇取消",
-            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認"
+            "出勤", "出勤更新", "退勤", "退勤更新", "休憩", "休暇", "休暇取消",
+            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認",
+            "休憩エラー"
           ],
           [
-            "<@#1> おはようございます (#2)", "<@#1> 出勤時間を#2へ変更しました",
-            "<@#1> お疲れ様でした (#2)", "<@#1> 退勤時間を#2へ変更しました",
-            "<@#1> #2を休暇として登録しました", "<@#1> #2の休暇を取り消しました",
-            "#1が出勤しています", "全員退勤しています",
-            "#1は#2が休暇です", "#1に休暇の人はいません",
-            "今日は休暇ですか？ #1", "退勤しましたか？ #1"
+            "<@#1> Good morning (#2)!", "<@#1> I changed starting time to #2",
+            "<@#1> Great work! (#2)", "<@#1> I changed leaving time to #2",
+            "<@#1> I changed break time to #2",
+            "<@#1> I registered a holiday for #2", "<@#1> I canceled holiday #2",
+            "#1 is working", "All staffs are working",
+            "#2 is having a holiday at #1", "No one is having a holiday at #1",
+            "Is today holiday? #1", "Did you finish working today? #1",
+            "[Error] You have not started working today!"
           ]
         ]);
       }
@@ -430,6 +464,7 @@ loadGSTimesheets = function () {
         { name: '日付' },
         { name: '出勤' },
         { name: '退勤' },
+        { name: '休憩(分)' },
         { name: 'ノート' },
       ],
       properties: [
@@ -476,7 +511,7 @@ loadGSTimesheets = function () {
     var rowNo = this.scheme.properties.length + 4;
     var startAt = DateUtils.parseDate(this.settings.get("開始日"));
     var s = new Date(startAt[0], startAt[1]-1, startAt[2], 0, 0, 0);
-    rowNo += parseInt((date.getTime()-date.getTimezoneOffset()*60*1000)/(1000*24*60*60)) - parseInt((s.getTime()-s.getTimezoneOffset()*60*1000)/(1000*24*60*60));
+    rowNo += parseInt((date.getTime()-date.getTimezoneOffset()*60*1000)/(1000*24*60*60), 10) - parseInt((s.getTime()-s.getTimezoneOffset()*60*1000)/(1000*24*60*60), 10);
     return rowNo;
   };
 
@@ -487,20 +522,21 @@ loadGSTimesheets = function () {
       return v === '' ? undefined : v;
     });
 
-    return({ user: username, date: row[0], signIn: row[1], signOut: row[2], note: row[3] });
+    return({ user: username, date: row[0], signIn: row[1], signOut: row[2], break: row[3], note: row[4] });
   };
 
   GSTimesheets.prototype.set = function(username, date, params) {
     var row = this.get(username, date);
-    _.extend(row, _.pick(params, 'signIn', 'signOut', 'note'));
+    _.extend(row, _.pick(params, 'signIn', 'signOut', 'break', 'note'));
 
     var sheet = this._getSheet(username);
     var rowNo = this._getRowNo(username, date);
 
-    var data = [DateUtils.toDate(date), row.signIn, row.signOut, row.note].map(function(v) {
+    var data = [DateUtils.toDate(date), row.signIn, row.signOut, row.break, row.note].map(function(v) {
       return v == null ? '' : v;
     });
     sheet.getRange("A"+rowNo+":"+String.fromCharCode(65 + this.scheme.columns.length - 1)+rowNo).setValues([data]);
+    sheet.getRange("B"+rowNo+":C"+rowNo).setNumberFormat('hh:mm')
 
     return row;
   };
@@ -608,17 +644,14 @@ function setUp() {
     settings.set('無視するユーザ', 'miyamoto,hubot,slackbot,incoming-webhook');
     settings.setNote('無視するユーザ', '反応をしないユーザを,区切りで設定する。botは必ず指定してください。');
 
-    // 休日を設定
-    // apiKey が設定されている場合のみ自動追加
-    var holidays = [];
-    if (global_settings.get('apiKey')) {
-      var url = 'https://www.googleapis.com/calendar/v3/calendars/japanese@holiday.calendar.google.com/events?maxResults=1000&orderBy=startTime&singleEvents=true&timeMin='+DateUtils.format("Y-m-dT00:00:00Z", DateUtils.now())+'&key='+global_settings.get('apiKey');
-
-      var data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
-      holidays = _.map(data.items, function(e) {
-        return e.start.date;
-      });
-    }
+    // 休日を設定 (iCal)
+    var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
+    var calendar = CalendarApp.getCalendarById(calendarId);
+    var startDate = DateUtils.now();
+    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
+    var holidays = _.map(calendar.getEvents(startDate, endDate), function(ev) {
+      return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
+    });
     settings.set('休日', holidays.join(', '));
     settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は適当に更新してください');
 
@@ -646,7 +679,7 @@ function migrate() {
   if(typeof GASProperties === 'undefined') GASProperties = loadGASProperties();
 
   var global_settings = new GASProperties();
-  global_settings.set('version', "20141027.0");
+  global_settings.set('version', "20200223.0");
   console.log("バージョンアップが完了しました。");
 }
 
@@ -735,6 +768,7 @@ loadTimesheets = function (exports) {
     // 日付は先に処理しておく
     this.date = DateUtils.parseDate(message);
     this.time = DateUtils.parseTime(message);
+    this.minutes = DateUtils.parseMinutes(message)
     this.datetime = DateUtils.normalizeDateTime(this.date, this.time);
     if(this.datetime !== null) {
       this.dateStr = DateUtils.format("Y/m/d", this.datetime);
@@ -743,12 +777,13 @@ loadTimesheets = function (exports) {
 
     // コマンド集
     var commands = [
-      ['actionSignOut', /(バ[ー〜ァ]*イ|ば[ー〜ぁ]*い|おやすみ|お[つっ]ー|おつ|さらば|お先|お疲|帰|乙|bye|night|(c|see)\s*(u|you)|退勤|ごきげんよ|グ[ッ]?バイ)/],
+      ['actionSignOut', /(バ[ー〜ァ]*イ|ば[ー〜ぁ]*い|おやすみ|お[つっ]ー|おつ|さらば|お先|お疲|帰|乙|bye|night|(c|see)\s*(u|you)|left|退勤|ごきげんよ|グ[ッ]?バイ)/],
       ['actionWhoIsOff', /(だれ|誰|who\s*is).*(休|やす(ま|み|む))/],
       ['actionWhoIsIn', /(だれ|誰|who\s*is)/],
+      ['actionBreak', /(休憩|break)/],
       ['actionCancelOff', /(休|やす(ま|み|む)|休暇).*(キャンセル|消|止|やめ|ません)/],
       ['actionOff', /(休|やす(ま|み|む)|休暇)/],
-      ['actionSignIn', /(モ[ー〜]+ニン|も[ー〜]+にん|おっは|おは|へろ|はろ|ヘロ|ハロ|hi|hello|morning|出勤)/],
+      ['actionSignIn', /(モ[ー〜]+ニン|も[ー〜]+にん|おっは|おは|へろ|はろ|ヘロ|ハロ|hi|hello|morning|ohayo|出勤)/],
       ['confirmSignIn', /__confirmSignIn__/],
       ['confirmSignOut', /__confirmSignOut__/],
     ];
@@ -796,6 +831,21 @@ loadTimesheets = function (exports) {
           this.storage.set(username, this.datetime, {signOut: this.datetime});
           this.responder.template("退勤更新", username, this.datetimeStr);
         }
+      }
+    }
+  };
+
+  // 休憩
+  Timesheets.prototype.actionBreak = function(username, time) {
+    if (this.minutes) {
+      var data = this.storage.get(username, this.datetime);
+      if(!data.signIn || data.signIn === '-') {
+        // まだ出勤前である
+        this.responder.template("休憩エラー", username, "" );
+      } else {
+        // break 入力
+        this.storage.set(username, this.datetime, {break: this.minutes});
+        this.responder.template("休憩", username, this.minutes + "分");
       }
     }
   };

@@ -5,7 +5,7 @@ loadGSTemplate = function() {
   var GSTemplate = function(spreadsheet) {
     this.spreadsheet = spreadsheet;
 
-    // メッセージテンプレート設定
+    // メッセージテンプレート設定 
     this.sheet = this.spreadsheet.getSheetByName('_メッセージ');
     if(!this.sheet) {
       this.sheet = this.spreadsheet.insertSheet('_メッセージ');
@@ -14,18 +14,21 @@ loadGSTemplate = function() {
       }
       else {
         var now = DateUtils.now();
-        this.sheet.getRange("A1:L2").setValues([
+        this.sheet.getRange("A1:N2").setValues([
           [
-            "出勤", "出勤更新", "退勤", "退勤更新", "休暇", "休暇取消",
-            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認"
+            "出勤", "出勤更新", "退勤", "退勤更新", "休憩", "休暇", "休暇取消",
+            "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認",
+            "休憩エラー"
           ],
           [
-            "<@#1> おはようございます (#2)", "<@#1> 出勤時間を#2へ変更しました",
-            "<@#1> お疲れ様でした (#2)", "<@#1> 退勤時間を#2へ変更しました",
-            "<@#1> #2を休暇として登録しました", "<@#1> #2の休暇を取り消しました",
-            "#1が出勤しています", "全員退勤しています",
-            "#1は#2が休暇です", "#1に休暇の人はいません",
-            "今日は休暇ですか？ #1", "退勤しましたか？ #1"
+            "<@#1> Good morning (#2)!", "<@#1> I changed starting time to #2",
+            "<@#1> Great work! (#2)", "<@#1> I changed leaving time to #2",
+            "<@#1> I changed break time to #2",
+            "<@#1> I registered a holiday for #2", "<@#1> I canceled holiday #2",
+            "#1 is working", "All staffs are working",
+            "#2 is having a holiday at #1", "No one is having a holiday at #1",
+            "Is today holiday? #1", "Did you finish working today? #1",
+            "[Error] You have not started working today!"
           ]
         ]);
       }
