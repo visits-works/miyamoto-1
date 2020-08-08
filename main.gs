@@ -433,6 +433,9 @@ loadGSBigQuery = function (exports) {
           }
           // not holiday
           data[i][6] = false;
+          while (data[i].length > 7) {
+            data[i].pop();
+          }
           csv += data[i].join(",") + "\r\n";
         } else if (Object.prototype.toString.call(data[i][0]) == "[object Date]" &&
           data[i][1] == '-' &&
@@ -446,6 +449,9 @@ loadGSBigQuery = function (exports) {
           data[i][5] = 0;
           // holiday
           data[i][6] = true;
+          while (data[i].length > 7) {
+            data[i].pop();
+          }
           csv += data[i].join(",") + "\r\n";
         }
       }

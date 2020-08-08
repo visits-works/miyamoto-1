@@ -109,3 +109,41 @@ When you update the Google Apps Script, you have to create new version for enabl
 3. Make a new version from `menu -> manage versions -> save new version`
 4. Publish new version from `menu -> Publish -> Deploy as web app` and select the latest version.
 
+## Set up BigQuery tables
+
+Goto https://console.cloud.google.com/ and check if your Timesheet project is already exsisting.
+If no, please create a new project.
+Then copy project ID from the dashboard.
+
+![copy project ID](docs/copy_project_id.png)
+
+Open your Timesheet script, then set the project ID to the window from manu: select Resources -> Cloud Platform Projct
+
+![paste project ID](docs/paste_project_ID.png)
+
+Go back to the GCP project page and enable BigQuery API if it is not enabled.
+
+![enable API](docs/enableAPI.png)
+
+From GAS page, add BigQuery library.
+
+![add lib](docs/enable_lib.png)
+
+![enable BigQuery](docs/enableBigQuery.png)
+
+Create new project and dataset from BigQuery console and copy the projectID and datasetID.
+
+![add dataset](docs/add-dataset.png)
+
+Set projectID and datasetID from the Google Script property from File -> Project Property menu.
+
+![set projectID and datasetID](docs/set-properties.png)
+
+## Push data to BigQuery table.
+
+Now you can push the data to the BigQuery.
+(At the first time, you will be asked to allow a permission to access BigQuery)
+
+![push to BigQuery](docs/pushToBigquery.png)
+
+By default, this script will be fired every day 5 am.
