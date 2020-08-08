@@ -339,7 +339,7 @@ loadGSBigQuery = function (exports) {
    * @param sheet a sheet of Spreadsheet
    */
   GSBigQuery.prototype.pushTable = function (sheet) {
-    var tableID = sheet.getName();
+    var tableID = sheet.getName().replace(".", "_");
     // table schema
     var table = {
       tableReference: {
@@ -381,7 +381,7 @@ loadGSBigQuery = function (exports) {
     };
     // remove table first
     try {
-      BigQuery.Tables.remove(this.projectID, this.datasetID, sheet.getName());
+      BigQuery.Tables.remove(this.projectID, this.datasetID, tableID);
     } catch (e) {}
     table = BigQuery.Tables.insert(table, this.projectID, this.datasetID);
 
@@ -456,7 +456,6 @@ loadGSBigQuery = function (exports) {
           csv += data[i].join(",") + "\r\n";
         }
       }
-      console.log(csv);
       return csv;
     } catch (e) {
       Logger.log(e);
