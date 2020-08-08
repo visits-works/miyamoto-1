@@ -109,12 +109,13 @@ loadGSBigQuery = function (exports) {
           Object.prototype.toString.call(data[i][1]) == "[object Date]" &&
           Object.prototype.toString.call(data[i][2]) == "[object Date]"
         ) {
-          // calculate working minutes
-          data[i][5] = (data[i][2] - data[i][1]) / (60 * 1000);
           // format work_date and start/end time
           data[i][0] = Utilities.formatDate(data[i][0], "JST", "yyyy-MM-dd");
-          data[i][1] = Utilities.formatDate(data[i][1], "JST", "yyyy-MM-dd HH:mm:ss");
-          data[i][2] = Utilities.formatDate(data[i][2], "JST", "yyyy-MM-dd HH:mm:ss");
+          // start/end time. use same date as working time for fixing data
+          data[i][1] = data[i][0] + Utilities.formatDate(data[i][1], "JST", " HH:mm:ss");
+          data[i][2] = data[i][0] + Utilities.formatDate(data[i][2], "JST", " HH:mm:ss");
+          // calculate working minutes
+          data[i][5] = (new Date(data[i][2]) - new Date(data[i][1])) / (60 * 1000);
           // if no breaks, it makes 0 mins
           if (!data[i][3]) {
             data[i][3] = 0;
