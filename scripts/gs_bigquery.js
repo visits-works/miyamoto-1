@@ -144,7 +144,6 @@ loadGSBigQuery = function (exports) {
           csv += data[i].join(",") + "\r\n";
         }
       }
-      console.log(csv);
       return csv;
     } catch (e) {
       Logger.log(e);
