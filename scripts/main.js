@@ -8,6 +8,7 @@ var initLibraries = function () {
   if (typeof GSTimesheets === 'undefined') GSTimesheets = loadGSTimesheets();
   if (typeof Timesheets === 'undefined') Timesheets = loadTimesheets();
   if (typeof Slack === 'undefined') Slack = loadSlack();
+  if (typeof GSBigQuery === 'undefined') GSBigQuery = loadGSBigQuery();
 }
 
 var init = function () {
@@ -23,10 +24,18 @@ var init = function () {
     var slack = new Slack(settings.get('Slack Incoming URL'), template, settings);
     var storage = new GSTimesheets(spreadsheet, settings);
     var timesheets = new Timesheets(storage, settings, slack);
+    var bigquery = null;
+    if (global_settings.get('bigQueryProjectID') && global_settings.get('bigQueryDatasetID')) {
+      bigquery = new GSBigQuery(spreadsheet, {
+        projectID: global_settings.get('bigQueryProjectID'),
+        datasetID: global_settings.get('bigQueryDatasetID')
+      });
+    }
     return ({
       receiver: slack,
       timesheets: timesheets,
-      storage: storage
+      storage: storage,
+      bigquery: bigquery
     });
   }
   return null;
@@ -48,6 +57,13 @@ function confirmSignIn() {
 function confirmSignOut() {
   var miyamoto = init();
   miyamoto.timesheets.confirmSignOut();
+}
+
+function pushToBigQuery() {
+  var miyamoto = init();
+  if (miyamoto.bigquery) {
+    miyamoto.bigquery.pushTables();
+  }
 }
 
 
@@ -101,6 +117,13 @@ function setUp() {
       .timeBased()
       .everyDays(1)
       .atHour(22)
+      .create();
+
+    // 毎日深夜5時頃に BigQuery テーブルを更新する
+    ScriptApp.newTrigger('pushToBigQuery')
+      .timeBased()
+      .everyDays(1)
+      .atHour(5)
       .create();
   }
 };

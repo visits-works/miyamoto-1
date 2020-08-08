@@ -312,6 +312,157 @@ checkUpdate = function(responder) {
 };
 // KVS
 
+loadGSBigQuery = function (exports) {
+  var GSBigQuery = function (spreadsheet, prop) {
+    // initialize
+    this.spreadsheet = spreadsheet;
+    this.projectID = prop.projectID;
+    this.datasetID = prop.datasetID;
+  };
+  /**
+   * push timesheet data to bigqurey table
+   */
+  GSBigQuery.prototype.pushTables = function () {
+    console.log('push to bigquery ');
+    _this = this;
+    // push all sheets
+    _.map(this.spreadsheet.getSheets(), function (s) {
+      var name = s.getName();
+      if (String(name).substr(0, 1) != '_') {
+        _this.pushTable(s);
+      }
+    })
+  };
+
+  /**
+   * 
+   * @param sheet a sheet of Spreadsheet
+   */
+  GSBigQuery.prototype.pushTable = function (sheet) {
+    var tableID = sheet.getName();
+    // table schema
+    var table = {
+      tableReference: {
+        projectId: this.projectID,
+        datasetId: this.datasetID,
+        tableId: tableID
+      },
+      schema: {
+        fields: [{
+            name: 'work_date',
+            type: 'date'
+          },
+          {
+            name: 'start_working',
+            type: 'datetime'
+          },
+          {
+            name: 'end_working',
+            type: 'datetime'
+          },
+          {
+            name: 'break_time',
+            type: 'integer'
+          },
+          {
+            name: 'note',
+            type: 'string'
+          },
+          {
+            name: 'work_minutes',
+            type: 'integer'
+          },
+          {
+            name: 'holiday',
+            type: 'boolean'
+          },
+        ]
+      }
+    };
+    // remove table first
+    try {
+      BigQuery.Tables.remove(this.projectID, this.datasetID, sheet.getName());
+    } catch (e) {}
+    table = BigQuery.Tables.insert(table, this.projectID, this.datasetID);
+
+    // load data as CSV format
+    var range = sheet.getDataRange();
+    var blob = Utilities.newBlob(this.convCsv(range)).setContentType('application/octet-stream');
+    // create job
+    var job = {
+      configuration: {
+        load: {
+          destinationTable: {
+            projectId: this.projectID,
+            datasetId: this.datasetID,
+            tableId: tableID
+          }
+        }
+      }
+    };
+    console.log('load data');
+    // insert data
+    job = BigQuery.Jobs.insert(job, this.projectID, blob);
+  };
+
+  GSBigQuery.prototype.convCsv = function (range) {
+    try {
+      var data = range.getValues();
+      var csv = "";
+      // read every rows
+      for (var i = 0; i < data.length; i++) {
+        for (var j = 0; j < data[i].length; j++) {
+          if (data[i][j].toString().indexOf(",") != -1) {
+            data[i][j] = "\"" + data[i][j] + "\"";
+          }
+        }
+        // if both of start and end time is set, load data
+        if (Object.prototype.toString.call(data[i][0]) == "[object Date]" &&
+          Object.prototype.toString.call(data[i][1]) == "[object Date]" &&
+          Object.prototype.toString.call(data[i][2]) == "[object Date]"
+        ) {
+          // calculate working minutes
+          data[i][5] = (data[i][2] - data[i][1]) / (60 * 1000);
+          // format work_date and start/end time
+          data[i][0] = Utilities.formatDate(data[i][0], "JST", "yyyy-MM-dd");
+          data[i][1] = Utilities.formatDate(data[i][1], "JST", "yyyy-MM-dd HH:mm:ss");
+          data[i][2] = Utilities.formatDate(data[i][2], "JST", "yyyy-MM-dd HH:mm:ss");
+          // if no breaks, it makes 0 mins
+          if (!data[i][3]) {
+            data[i][3] = 0;
+          }
+          // not holiday
+          data[i][6] = false;
+          csv += data[i].join(",") + "\r\n";
+        } else if (Object.prototype.toString.call(data[i][0]) == "[object Date]" &&
+          data[i][1] == '-' &&
+          data[i][2] == '-') {
+          // log holidays
+          // format work_date
+          data[i][0] = Utilities.formatDate(data[i][0], "JST", "yyyy-MM-dd");
+          data[i][1] = null;
+          data[i][2] = null;
+          data[i][3] = 0;
+          data[i][5] = 0;
+          // holiday
+          data[i][6] = true;
+          csv += data[i].join(",") + "\r\n";
+        }
+      }
+      console.log(csv);
+      return csv;
+    } catch (e) {
+      Logger.log(e);
+    }
+  };
+
+  return GSBigQuery;
+};
+
+if (typeof exports !== 'undefined') {
+  exports.GSBigQuery = loadGSBigQuery();
+}// KVS
+
 loadGSProperties = function (exports) {
   var GSProperties = function(spreadsheet) {
     // 初期設定
@@ -376,24 +527,23 @@ if(typeof exports !== 'undefined') {
 // メッセージテンプレート
 // GSTemplate = loadGSTemplate();
 
-loadGSTemplate = function() {
-  var GSTemplate = function(spreadsheet) {
+loadGSTemplate = function () {
+  var GSTemplate = function (spreadsheet) {
     this.spreadsheet = spreadsheet;
 
     // メッセージテンプレート設定 
     this.sheet = this.spreadsheet.getSheetByName('_メッセージ');
-    if(!this.sheet) {
+    if (!this.sheet) {
       this.sheet = this.spreadsheet.insertSheet('_メッセージ');
-      if(!this.sheet) {
+      if (!this.sheet) {
         throw "エラー: メッセージシートを作れませんでした";
-      }
-      else {
+      } else {
         var now = DateUtils.now();
         this.sheet.getRange("A1:N2").setValues([
           [
             "出勤", "出勤更新", "退勤", "退勤更新", "休憩", "休暇", "休暇取消",
             "出勤中", "出勤なし", "休暇中", "休暇なし", "出勤確認", "退勤確認",
-            "休憩エラー"
+            "休憩エラー", "退勤と休憩", "退勤更新と休憩"
           ],
           [
             "<@#1> Good morning (#2)!", "<@#1> I changed starting time to #2",
@@ -403,7 +553,9 @@ loadGSTemplate = function() {
             "#1 is working", "All staffs are working",
             "#2 is having a holiday at #1", "No one is having a holiday at #1",
             "Is today holiday? #1", "Did you finish working today? #1",
-            "[Error] You have not started working today!"
+            "[Error] You have not started working today!",
+            "<@#1> Great work! I added 60 mins break for you (#2)",
+            "<@#1> I changed leaving time to #2 and added 6 mins break for you"
           ]
         ]);
       }
@@ -411,31 +563,31 @@ loadGSTemplate = function() {
   };
 
   // テンプレートからメッセージを生成
-  GSTemplate.prototype.template = function(label) {
+  GSTemplate.prototype.template = function (label) {
     var labels = this.sheet.getRange("A1:Z1").getValues()[0];
-    for(var i = 0; i < labels.length; ++i) {
-      if(labels[i] == label) {
+    for (var i = 0; i < labels.length; ++i) {
+      if (labels[i] == label) {
         var template = _.sample(
           _.filter(
-            _.map(this.sheet.getRange(String.fromCharCode(i+65)+'2:'+(String.fromCharCode(i+65))).getValues(), function(v) {
-            return v[0];
-          }),
-            function(v) {
+            _.map(this.sheet.getRange(String.fromCharCode(i + 65) + '2:' + (String.fromCharCode(i + 65))).getValues(), function (v) {
+              return v[0];
+            }),
+            function (v) {
               return !!v;
             }
-        )
+          )
         );
 
         var message = template;
         for (var i = 1; i < arguments.length; i++) {
           var arg = arguments[i]
-          if(_.isArray(arg)) {
-            arg = _.map(arg, function(u) {
-              return "<@"+u+">";
+          if (_.isArray(arg)) {
+            arg = _.map(arg, function (u) {
+              return "<@" + u + ">";
             }).join(', ');
           }
 
-          message = message.replace("#"+i, arg);
+          message = message.replace("#" + i, arg);
         }
 
         return message;
@@ -447,10 +599,9 @@ loadGSTemplate = function() {
   return GSTemplate;
 };
 
-if(typeof exports !== 'undefined') {
+if (typeof exports !== 'undefined') {
   exports.GSTemplate = loadGSTemplate();
-}
-// 入力内容を解析して、メソッドを呼び出す
+}// 入力内容を解析して、メソッドを呼び出す
 // Timesheets = loadTimesheets();
 
 loadGSTimesheets = function () {
@@ -568,34 +719,43 @@ if(typeof exports !== 'undefined') {
   exports.GSTimesheets = loadGSTimesheets();
 }
 // 各モジュールの読み込み
-var initLibraries = function() {
-  if(typeof EventListener === 'undefined') EventListener = loadEventListener();
-  if(typeof DateUtils === 'undefined') DateUtils = loadDateUtils();
-  if(typeof GASProperties === 'undefined') GASProperties = loadGASProperties();
-  if(typeof GSProperties === 'undefined') GSProperties = loadGSProperties();
-  if(typeof GSTemplate === 'undefined') GSTemplate = loadGSTemplate();
-  if(typeof GSTimesheets === 'undefined') GSTimesheets = loadGSTimesheets();
-  if(typeof Timesheets === 'undefined') Timesheets = loadTimesheets();
-  if(typeof Slack === 'undefined') Slack = loadSlack();
+var initLibraries = function () {
+  if (typeof EventListener === 'undefined') EventListener = loadEventListener();
+  if (typeof DateUtils === 'undefined') DateUtils = loadDateUtils();
+  if (typeof GASProperties === 'undefined') GASProperties = loadGASProperties();
+  if (typeof GSProperties === 'undefined') GSProperties = loadGSProperties();
+  if (typeof GSTemplate === 'undefined') GSTemplate = loadGSTemplate();
+  if (typeof GSTimesheets === 'undefined') GSTimesheets = loadGSTimesheets();
+  if (typeof Timesheets === 'undefined') Timesheets = loadTimesheets();
+  if (typeof Slack === 'undefined') Slack = loadSlack();
+  if (typeof GSBigQuery === 'undefined') GSBigQuery = loadGSBigQuery();
 }
 
-var init = function() {
+var init = function () {
   initLibraries();
 
   var global_settings = new GASProperties();
 
   var spreadsheetId = global_settings.get('spreadsheet');
-  if(spreadsheetId) {
+  if (spreadsheetId) {
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     var settings = new GSProperties(spreadsheet);
     var template = new GSTemplate(spreadsheet);
     var slack = new Slack(settings.get('Slack Incoming URL'), template, settings);
     var storage = new GSTimesheets(spreadsheet, settings);
     var timesheets = new Timesheets(storage, settings, slack);
-    return({
+    var bigquery = null;
+    if (global_settings.get('bigQueryProjectID') && global_settings.get('bigQueryDatasetID')) {
+      bigquery = new GSBigQuery(spreadsheet, {
+        projectID: global_settings.get('bigQueryProjectID'),
+        datasetID: global_settings.get('bigQueryDatasetID')
+      });
+    }
+    return ({
       receiver: slack,
       timesheets: timesheets,
-      storage: storage
+      storage: storage,
+      bigquery: bigquery
     });
   }
   return null;
@@ -619,6 +779,13 @@ function confirmSignOut() {
   miyamoto.timesheets.confirmSignOut();
 }
 
+function pushToBigQuery() {
+  var miyamoto = init();
+  if (miyamoto.bigquery) {
+    miyamoto.bigquery.pushTables();
+  }
+}
+
 
 // 初期化する
 function setUp() {
@@ -626,12 +793,12 @@ function setUp() {
 
   // spreadsheetが無かったら初期化
   var global_settings = new GASProperties();
-  if(!global_settings.get('spreadsheet')) {
+  if (!global_settings.get('spreadsheet')) {
 
     // タイムシートを作る
     var spreadsheet = SpreadsheetApp.create("Slack Timesheets");
     var sheets = spreadsheet.getSheets();
-    if(sheets.length == 1 && sheets[0].getLastRow() == 0) {
+    if (sheets.length == 1 && sheets[0].getLastRow() == 0) {
       sheets[0].setName('_設定');
     }
     global_settings.set('spreadsheet', spreadsheet.getId());
@@ -649,7 +816,7 @@ function setUp() {
     var calendar = CalendarApp.getCalendarById(calendarId);
     var startDate = DateUtils.now();
     var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
-    var holidays = _.map(calendar.getEvents(startDate, endDate), function(ev) {
+    var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
       return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
     });
     settings.set('休日', holidays.join(', '));
@@ -671,12 +838,19 @@ function setUp() {
       .everyDays(1)
       .atHour(22)
       .create();
+
+    // 毎日深夜5時頃に BigQuery テーブルを更新する
+    ScriptApp.newTrigger('pushToBigQuery')
+      .timeBased()
+      .everyDays(1)
+      .atHour(5)
+      .create();
   }
 };
 
 /* バージョンアップ処理を行う */
 function migrate() {
-  if(typeof GASProperties === 'undefined') GASProperties = loadGASProperties();
+  if (typeof GASProperties === 'undefined') GASProperties = loadGASProperties();
 
   var global_settings = new GASProperties();
   global_settings.set('version', "20200223.0");
@@ -690,8 +864,7 @@ function test1(e) {
   var miyamoto = init();
   miyamoto.receiver.receiveMessage({user_name:"masuidrive", text:"hello 8:00"});
 }
-*/
-// Slackのインタフェース
+*/// Slackのインタフェース
 // Slack = loadSlack();
 
 loadSlack = function () {
@@ -752,25 +925,25 @@ if(typeof exports !== 'undefined') {
 // Timesheets = loadTimesheets();
 
 loadTimesheets = function (exports) {
-  var Timesheets = function(storage, settings, responder) {
+  var Timesheets = function (storage, settings, responder) {
     this.storage = storage;
     this.responder = responder;
     this.settings = settings;
 
     var self = this;
-    this.responder.on('receiveMessage', function(username, message) {
+    this.responder.on('receiveMessage', function (username, message) {
       self.receiveMessage(username, message);
     });
   };
 
   // メッセージを受信する
-  Timesheets.prototype.receiveMessage = function(username, message) {
+  Timesheets.prototype.receiveMessage = function (username, message) {
     // 日付は先に処理しておく
     this.date = DateUtils.parseDate(message);
     this.time = DateUtils.parseTime(message);
     this.minutes = DateUtils.parseMinutes(message)
     this.datetime = DateUtils.normalizeDateTime(this.date, this.time);
-    if(this.datetime !== null) {
+    if (this.datetime !== null) {
       this.dateStr = DateUtils.format("Y/m/d", this.datetime);
       this.datetimeStr = DateUtils.format("Y/m/d H:M", this.datetime);
     }
@@ -789,28 +962,31 @@ loadTimesheets = function (exports) {
     ];
 
     // メッセージを元にメソッドを探す
-    var command = _.find(commands, function(ary) {
-      return(ary && message.match(ary[1]));
+    var command = _.find(commands, function (ary) {
+      return (ary && message.match(ary[1]));
     });
 
     // メッセージを実行
-    if(command && this[command[0]]) {
+    if (command && this[command[0]]) {
       return this[command[0]](username, message);
     }
   }
 
   // 出勤
-  Timesheets.prototype.actionSignIn = function(username, message) {
-    if(this.datetime) {
+  Timesheets.prototype.actionSignIn = function (username, message) {
+    if (this.datetime) {
       var data = this.storage.get(username, this.datetime);
-      if(!data.signIn || data.signIn === '-') {
-        this.storage.set(username, this.datetime, {signIn: this.datetime});
+      if (!data.signIn || data.signIn === '-') {
+        this.storage.set(username, this.datetime, {
+          signIn: this.datetime
+        });
         this.responder.template("出勤", username, this.datetimeStr);
-      }
-      else {
+      } else {
         // 更新の場合は時間を明示する必要がある
-        if(!!this.time) {
-          this.storage.set(username, this.datetime, {signIn: this.datetime});
+        if (!!this.time) {
+          this.storage.set(username, this.datetime, {
+            signIn: this.datetime
+          });
           this.responder.template("出勤更新", username, this.datetimeStr);
         }
       }
@@ -818,139 +994,171 @@ loadTimesheets = function (exports) {
   };
 
   // 退勤
-  Timesheets.prototype.actionSignOut = function(username, message) {
-    if(this.datetime) {
+  Timesheets.prototype.actionSignOut = function (username, message) {
+    if (this.datetime) {
       var data = this.storage.get(username, this.datetime);
-      if(!data.signOut || data.signOut === '-') {
-        this.storage.set(username, this.datetime, {signOut: this.datetime});
-        this.responder.template("退勤", username, this.datetimeStr);
-      }
-      else {
+      if (!data.signIn || data.signIn === '-') {
+        // まだ出勤前である
+        this.responder.template("休憩エラー", username, "");
+      } else if (!data.signOut || data.signOut === '-') {
+        this.storage.set(username, this.datetime, {
+          signOut: this.datetime
+        });
+        // 5時間以上働いていて、休憩が入っていなければ休憩を更新する
+        if (!data.break && (this.datetime - data.signIn) > (5 * 60 * 60 * 1000)) {
+          // break 入力
+          this.storage.set(username, this.datetime, {
+            break: 60
+          });
+          this.responder.template("退勤と休憩", username, this.datetimeStr);
+        } else {
+          this.responder.template("退勤", username, this.datetimeStr);
+        }
+      } else {
         // 更新の場合は時間を明示する必要がある
-        if(!!this.time) {
-          this.storage.set(username, this.datetime, {signOut: this.datetime});
-          this.responder.template("退勤更新", username, this.datetimeStr);
+        if (!!this.time) {
+          this.storage.set(username, this.datetime, {
+            signOut: this.datetime
+          });
+          // 5時間以上働いていて、休憩が入っていなければ休憩を更新する
+          if (!data.break && (this.datetime - data.signIn) > (5 * 60 * 60 * 1000)) {
+            // break 入力
+            this.storage.set(username, this.datetime, {
+              break: 60
+            });
+            this.responder.template("退勤更新と休憩", username, this.datetimeStr);
+          } else {
+            this.responder.template("退勤更新", username, this.datetimeStr);
+          }
         }
       }
     }
   };
 
   // 休憩
-  Timesheets.prototype.actionBreak = function(username, time) {
+  Timesheets.prototype.actionBreak = function (username, time) {
     if (this.minutes) {
       var data = this.storage.get(username, this.datetime);
-      if(!data.signIn || data.signIn === '-') {
+      if (!data.signIn || data.signIn === '-') {
         // まだ出勤前である
-        this.responder.template("休憩エラー", username, "" );
+        this.responder.template("休憩エラー", username, "");
       } else {
         // break 入力
-        this.storage.set(username, this.datetime, {break: this.minutes});
+        this.storage.set(username, this.datetime, {
+          break: this.minutes
+        });
         this.responder.template("休憩", username, this.minutes + "分");
       }
     }
   };
 
   // 休暇申請
-  Timesheets.prototype.actionOff = function(username, message) {
-    if(this.date) {
-      var dateObj = new Date(this.date[0], this.date[1]-1, this.date[2]);
+  Timesheets.prototype.actionOff = function (username, message) {
+    if (this.date) {
+      var dateObj = new Date(this.date[0], this.date[1] - 1, this.date[2]);
       var data = this.storage.get(username, dateObj);
-      if(!data.signOut || data.signOut === '-') {
-        this.storage.set(username, dateObj, {signIn: '-', signOut: '-', note: message});
+      if (!data.signOut || data.signOut === '-') {
+        this.storage.set(username, dateObj, {
+          signIn: '-',
+          signOut: '-',
+          note: message
+        });
         this.responder.template("休暇", username, DateUtils.format("Y/m/d", dateObj));
       }
     }
   };
 
   // 休暇取消
-  Timesheets.prototype.actionCancelOff = function(username, message) {
-    if(this.date) {
-      var dateObj = new Date(this.date[0], this.date[1]-1, this.date[2]);
+  Timesheets.prototype.actionCancelOff = function (username, message) {
+    if (this.date) {
+      var dateObj = new Date(this.date[0], this.date[1] - 1, this.date[2]);
       var data = this.storage.get(username, dateObj);
-      if(!data.signOut || data.signOut === '-') {
-        this.storage.set(username, dateObj, {signIn: null, signOut: null, note: message});
+      if (!data.signOut || data.signOut === '-') {
+        this.storage.set(username, dateObj, {
+          signIn: null,
+          signOut: null,
+          note: message
+        });
         this.responder.template("休暇取消", username, DateUtils.format("Y/m/d", dateObj));
       }
     }
   };
 
   // 出勤中
-  Timesheets.prototype.actionWhoIsIn = function(username, message) {
+  Timesheets.prototype.actionWhoIsIn = function (username, message) {
     var dateObj = DateUtils.toDate(DateUtils.now());
-    var result = _.compact(_.map(this.storage.getByDate(dateObj), function(row) {
+    var result = _.compact(_.map(this.storage.getByDate(dateObj), function (row) {
       return _.isDate(row.signIn) && !_.isDate(row.signOut) ? row.user : undefined;
     }));
 
-    if(_.isEmpty(result)) {
+    if (_.isEmpty(result)) {
       this.responder.template("出勤なし");
-    }
-    else {
+    } else {
       this.responder.template("出勤中", result.sort().join(', '));
     }
   };
 
   // 休暇中
-  Timesheets.prototype.actionWhoIsOff = function(username, message) {
+  Timesheets.prototype.actionWhoIsOff = function (username, message) {
     var dateObj = DateUtils.toDate(DateUtils.now());
     var dateStr = DateUtils.format("Y/m/d", dateObj);
-    var result = _.compact(_.map(this.storage.getByDate(dateObj), function(row){
+    var result = _.compact(_.map(this.storage.getByDate(dateObj), function (row) {
       return row.signIn === '-' ? row.user : undefined;
     }));
 
     // 定休の処理
     var wday = dateObj.getDay();
     var self = this;
-    _.each(this.storage.getUsers(), function(username) {
-      if(_.contains(self.storage.getDayOff(username), wday)) {
+    _.each(this.storage.getUsers(), function (username) {
+      if (_.contains(self.storage.getDayOff(username), wday)) {
         result.push(username);
       }
     });
     result = _.uniq(result);
 
-    if(_.isEmpty(result)) {
+    if (_.isEmpty(result)) {
       this.responder.template("休暇なし", dateStr);
-    }
-    else {
+    } else {
       this.responder.template("休暇中", dateStr, result.sort().join(', '));
     }
   };
 
   // 出勤していない人にメッセージを送る
-  Timesheets.prototype.confirmSignIn = function(username, message) {
+  Timesheets.prototype.confirmSignIn = function (username, message) {
     var self = this;
-    var holidays = _.compact(_.map((this.settings.get("休日") || "").split(','), function(s) {
+    var holidays = _.compact(_.map((this.settings.get("休日") || "").split(','), function (s) {
       var date = DateUtils.parseDateTime(s);
       return date ? DateUtils.format("Y/m/d", date) : undefined;
     }));
     var today = DateUtils.toDate(DateUtils.now());
 
     // 休日ならチェックしない
-    if(_.contains(holidays, DateUtils.format("Y/m/d",today))) return;
+    if (_.contains(holidays, DateUtils.format("Y/m/d", today))) return;
 
     var wday = DateUtils.now().getDay();
-    var signedInUsers = _.compact(_.map(this.storage.getByDate(today), function(row) {
+    var signedInUsers = _.compact(_.map(this.storage.getByDate(today), function (row) {
       var signedIn = _.isDate(row.signIn);
       var off = (row.signIn === '-') || _.contains(self.storage.getDayOff(row.user), wday);
       return (signedIn || off) ? row.user : undefined;
     }));
     var users = _.difference(this.storage.getUsers(), signedInUsers);
 
-    if(!_.isEmpty(users)) {
+    if (!_.isEmpty(users)) {
       this.responder.template("出勤確認", users.sort());
     }
 
     // バージョンチェックを行う
-    if(typeof checkUpdate == 'function') checkUpdate(this.responder);
+    if (typeof checkUpdate == 'function') checkUpdate(this.responder);
   };
 
   // 退勤していない人にメッセージを送る
-  Timesheets.prototype.confirmSignOut = function(username, message) {
+  Timesheets.prototype.confirmSignOut = function (username, message) {
     var dateObj = DateUtils.toDate(DateUtils.now());
-    var users = _.compact(_.map(this.storage.getByDate(dateObj), function(row) {
+    var users = _.compact(_.map(this.storage.getByDate(dateObj), function (row) {
       return _.isDate(row.signIn) && !_.isDate(row.signOut) ? row.user : undefined;
     }));
 
-    if(!_.isEmpty(users)) {
+    if (!_.isEmpty(users)) {
       this.responder.template("退勤確認", users.sort());
     }
   };
@@ -958,10 +1166,9 @@ loadTimesheets = function (exports) {
   return Timesheets;
 };
 
-if(typeof exports !== 'undefined') {
+if (typeof exports !== 'undefined') {
   exports.Timesheets = loadTimesheets();
-}
-//     Underscore.js 1.7.0
+}//     Underscore.js 1.7.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
