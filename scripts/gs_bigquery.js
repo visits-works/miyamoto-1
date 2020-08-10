@@ -109,11 +109,19 @@ loadGSBigQuery = function (exports) {
           Object.prototype.toString.call(data[i][1]) == "[object Date]" &&
           Object.prototype.toString.call(data[i][2]) == "[object Date]"
         ) {
+          var daycheck = data[i][0];
           // format work_date and start/end time
           data[i][0] = Utilities.formatDate(data[i][0], "JST", "yyyy-MM-dd");
           // start/end time. use same date as working time for fixing data
           data[i][1] = data[i][0] + Utilities.formatDate(data[i][1], "JST", " HH:mm:ss");
-          data[i][2] = data[i][0] + Utilities.formatDate(data[i][2], "JST", " HH:mm:ss");
+          daycheck.setDate(daycheck.getDate() + 1);
+          // if the end_date is the next day of the working day, it will be an overnight work.
+          if (Utilities.formatDate(daycheck, "JST", "yyyy-MM-dd") ==
+            Utilities.formatDate(data[i][2], "JST", "yyyy-MM-dd")) {
+            data[i][2] = Utilities.formatDate(data[i][2], "JST", "yyyy-MM-dd HH:mm:ss");
+          } else {
+            data[i][2] = data[i][0] + Utilities.formatDate(data[i][2], "JST", " HH:mm:ss");
+          }
           // if no breaks, it makes 0 mins
           if (!data[i][3]) {
             data[i][3] = 0;
