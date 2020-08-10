@@ -7,9 +7,9 @@ loadGSCalendar = function () {
     this.settings = settings;
 
     // メッセージテンプレート設定 
-    this.sheet = this.spreadsheet.getSheetByName('_カレンダー');
+    this.sheet = this.spreadsheet.getSheetByName('_勤務日数');
     if (!this.sheet) {
-      this.sheet = this.spreadsheet.insertSheet('_カレンダー');
+      this.sheet = this.spreadsheet.insertSheet('_勤務日数');
       if (!this.sheet) {
         throw "エラー: メッセージシートを作れませんでした";
       }
@@ -37,7 +37,7 @@ loadGSCalendar = function () {
   /** setup Calendars */
   GSCalendar.prototype.updateWorkdays = function () {
     this.spreadsheet.deleteSheet(this.sheet);
-    this.sheet = this.spreadsheet.insertSheet('_カレンダー');
+    this.sheet = this.spreadsheet.insertSheet('_勤務日数');
     var startDate = this.getStartDate();
     var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
     var holidays = this.settings.get('休日') + "," + this.settings.get('追加休日');
