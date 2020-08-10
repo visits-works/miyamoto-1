@@ -426,12 +426,12 @@ loadGSBigQuery = function (exports) {
           // start/end time. use same date as working time for fixing data
           data[i][1] = data[i][0] + Utilities.formatDate(data[i][1], "JST", " HH:mm:ss");
           data[i][2] = data[i][0] + Utilities.formatDate(data[i][2], "JST", " HH:mm:ss");
-          // calculate working minutes
-          data[i][5] = (new Date(data[i][2]) - new Date(data[i][1])) / (60 * 1000);
           // if no breaks, it makes 0 mins
           if (!data[i][3]) {
             data[i][3] = 0;
           }
+          // calculate working minutes
+          data[i][5] = ((new Date(data[i][2]) - new Date(data[i][1])) / (60 * 1000)) - data[i][3];
           // not holiday
           data[i][6] = false;
           while (data[i].length > 7) {
