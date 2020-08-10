@@ -31,7 +31,17 @@ loadGSCalendar = function () {
     endDate.setDate(endDate.getDate() - 1);
     settings.set('最終日', DateUtils.format("Y-m-d", endDate))
     settings.setNote('最終日', '年度の最終日。この日以降はエラーが出ます。');
-    settings.setNote('追加休日', '追加の休日です。年末年始などをカンマ区切りで入力してください。');
+    if (!settings.get('追加休日')) {
+      settings.set('追加休日', [
+        startDate.getFullYear() + '-12-29',
+        startDate.getFullYear() + '-12-30',
+        startDate.getFullYear() + '-12-31',
+        (startDate.getFullYear() + 1) + '-01-01',
+        (startDate.getFullYear() + 1) + '-01-02',
+        (startDate.getFullYear() + 1) + '-01-03'
+      ].join(', '))
+    }
+    settings.setNote('追加休日', '追加の休日です。年末年始などをカンマ区切りで入力してください。変更したら、再度 updateCalendar() を実行してください。');
     this.updateWorkdays();
   };
   /** setup Calendars */
