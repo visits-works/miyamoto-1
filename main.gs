@@ -824,18 +824,10 @@ function setUp() {
     settings.setNote('開始日', '変更はしないでください');
     settings.set('無視するユーザ', 'miyamoto,hubot,slackbot,incoming-webhook');
     settings.setNote('無視するユーザ', '反応をしないユーザを,区切りで設定する。botは必ず指定してください。');
+    settings.set('開始月', 4);
+    settings.setNote('開始月', '年度の開始月。変更したら updateCalendar 関数を実行してください');
 
-    // 休日を設定 (iCal)
-    var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
-    var calendar = CalendarApp.getCalendarById(calendarId);
-    var startDate = DateUtils.now();
-    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
-    var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
-      return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
-    });
-    settings.set('休日', holidays.join(', '));
-    settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は適当に更新してください');
-
+    updateCalendar(settings)
     // メッセージ用のシートを作成
     new GSTemplate(spreadsheet);
 
@@ -861,6 +853,43 @@ function setUp() {
       .create();
   }
 };
+/** update calendar */
+function updateCalendar(settings) {
+  if (!settings) {
+    initLibraries();
+    var global_settings = new GASProperties();
+    var spreadsheetId = global_settings.get('spreadsheet');
+    if (spreadsheetId) {
+      var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+      settings = new GSProperties(spreadsheet);
+    } else {
+      console.error("Spreadsheet is not initialized");
+      return;
+    }
+  }
+  var startMonth = Number(settings.get('開始月'));
+  if (!startMonth) {
+    startMonth = 4;
+  }
+  // 休日を設定 (iCal)
+  var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
+  var calendar = CalendarApp.getCalendarById(calendarId);
+  var startDate = new Date(DateUtils.now().getFullYear(), (startMonth - 1));
+  // use last year if the referencing date is future date
+  if (startDate > new Date()) {
+    startDate = new Date(DateUtils.now().getFullYear() - 1, (startMonth - 1));
+  }
+  console.log(startDate);
+  var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
+  var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
+    return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
+  });
+  settings.set('休日', holidays.join(', '));
+  settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は適当に更新してください');
+  endDate.setDate(endDate.getDate() - 1);
+  settings.set('最終日', DateUtils.format("Y-m-d", endDate))
+  settings.setNote('最終日', '年度の最終日。この日以降はエラーが出ます。');
+}
 
 /* バージョンアップ処理を行う */
 function migrate() {
