@@ -499,21 +499,46 @@ loadGSCalendar = function () {
     // 休日を設定 (iCal)
     var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
     var calendar = CalendarApp.getCalendarById(calendarId);
-    console.log(startDate);
     var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
     var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
       return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
     });
     settings.set('休日', holidays.join(', '));
-    settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は適当に更新してください');
+    settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は再度 updateCalendar() を実行してください。');
     endDate.setDate(endDate.getDate() - 1);
     settings.set('最終日', DateUtils.format("Y-m-d", endDate))
     settings.setNote('最終日', '年度の最終日。この日以降はエラーが出ます。');
+    settings.setNote('追加休日', '追加の休日です。年末年始などをカンマ区切りで入力してください。');
+    this.updateWorkdays();
   };
   /** setup Calendars */
   GSCalendar.prototype.updateWorkdays = function () {
-    this.spreadsheet.delteSheet(this.sheet);
+    this.spreadsheet.deleteSheet(this.sheet);
     this.sheet = this.spreadsheet.insertSheet('_カレンダー');
+    var startDate = this.getStartDate();
+    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
+    var holidays = this.settings.get('休日') + this.settings.get('追加休日');
+    var workDays = 0;
+    var values = [];
+    console.log(holidays);
+    while (startDate < endDate) {
+      if (startDate.getDay() == 0 || startDate.getDay() == 6 || holidays.indexOf(DateUtils.format("Y-m-d", startDate)) > -1) {
+        // holiday
+      } else {
+        console.log(DateUtils.format("Y-m-d", startDate));
+        console.log(holidays.indexOf(DateUtils.format("Y-m-d", startDate)));
+        workDays += 1;
+      }
+      var currentMonth = startDate.getMonth();
+      var ym = DateUtils.format("Y-m", startDate)
+      startDate.setDate(startDate.getDate() + 1);
+      if (startDate.getMonth() != currentMonth) {
+        values.push([ym, workDays]);
+        workDays = 0;
+      }
+    }
+    console.log(values)
+    this.sheet.getRange(1, 1, values.length, 2).setValues(values);
   };
   /** getStartDate */
   GSCalendar.prototype.getStartDate = function () {
