@@ -9,7 +9,8 @@ var initLibraries = function () {
   if (typeof Timesheets === 'undefined') Timesheets = loadTimesheets();
   if (typeof Slack === 'undefined') Slack = loadSlack();
   if (typeof GSBigQuery === 'undefined') GSBigQuery = loadGSBigQuery();
-}
+  if (typeof GSCalendar === 'undefined') GSCalendar = loadGSCalendar();
+};
 
 var init = function () {
   initLibraries();
@@ -90,17 +91,11 @@ function setUp() {
     settings.setNote('開始日', '変更はしないでください');
     settings.set('無視するユーザ', 'miyamoto,hubot,slackbot,incoming-webhook');
     settings.setNote('無視するユーザ', '反応をしないユーザを,区切りで設定する。botは必ず指定してください。');
+    settings.set('開始月', 4);
+    settings.setNote('開始月', '年度の開始月。変更したら updateCalendar 関数を実行してください');
 
-    // 休日を設定 (iCal)
-    var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
-    var calendar = CalendarApp.getCalendarById(calendarId);
-    var startDate = DateUtils.now();
-    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
-    var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
-      return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
-    });
-    settings.set('休日', holidays.join(', '));
-    settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は適当に更新してください');
+    var calender = new GSCalendar(spreadsheet, settings);
+    calender.setupCalendar();
 
     // メッセージ用のシートを作成
     new GSTemplate(spreadsheet);
@@ -127,6 +122,30 @@ function setUp() {
       .create();
   }
 };
+/** update calendar */
+function updateCalendar() {
+  var miyamoto = init();
+  initLibraries();
+  var global_settings = new GASProperties();
+  var spreadsheetId = global_settings.get('spreadsheet');
+  if (spreadsheetId) {
+    spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    settings = new GSProperties(spreadsheet);
+  } else {
+    console.error("Spreadsheet is not initialized");
+    return;
+  }
+  var calender = new GSCalendar(spreadsheet, settings);
+  calender.setupCalendar();
+
+  if (global_settings.get('bigQueryProjectID') && global_settings.get('bigQueryDatasetID')) {
+    bigquery = new GSBigQuery(spreadsheet, {
+      projectID: global_settings.get('bigQueryProjectID'),
+      datasetID: global_settings.get('bigQueryDatasetID')
+    });
+    bigquery.pushWorkDays();
+  }
+}
 
 /* バージョンアップ処理を行う */
 function migrate() {

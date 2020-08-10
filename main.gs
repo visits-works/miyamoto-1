@@ -469,12 +469,157 @@ loadGSBigQuery = function (exports) {
       Logger.log(e);
     }
   };
+  /**
+   * 
+   * @param sheet a sheet of Spreadsheet
+   */
+  GSBigQuery.prototype.pushWorkDays = function () {
+    var tableID = "workdays";
+    // table schema
+    var table = {
+      tableReference: {
+        projectId: this.projectID,
+        datasetId: this.datasetID,
+        tableId: tableID
+      },
+      schema: {
+        fields: [{
+            name: 'work_month',
+            type: 'string'
+          },
+          {
+            name: 'work_days',
+            type: 'integer'
+          }
+        ]
+      }
+    };
+    // remove table first
+    try {
+      BigQuery.Tables.remove(this.projectID, this.datasetID, tableID);
+    } catch (e) {}
+    table = BigQuery.Tables.insert(table, this.projectID, this.datasetID);
 
+    // load data as CSV format
+    var sheet = this.spreadsheet.getSheetByName('_勤務日数');
+    var range = sheet.getDataRange();
+    var blob = Utilities.newBlob(this.convWorkDayCsv(range)).setContentType('application/octet-stream');
+    // create job
+    var job = {
+      configuration: {
+        load: {
+          destinationTable: {
+            projectId: this.projectID,
+            datasetId: this.datasetID,
+            tableId: tableID
+          }
+        }
+      }
+    };
+    console.log('load data');
+    // insert data
+    job = BigQuery.Jobs.insert(job, this.projectID, blob);
+  };
+  GSBigQuery.prototype.convWorkDayCsv = function (range) {
+    try {
+      var data = range.getValues();
+      var csv = "";
+      // read every rows
+      for (var i = 0; i < data.length; i++) {
+        data[i][0] = Utilities.formatDate(data[i][0], "JST", "yyyy-MM");
+        csv += data[i].join(",") + "\r\n";
+      }
+      return csv;
+    } catch (e) {
+      Logger.log(e);
+    }
+  };
   return GSBigQuery;
 };
 
 if (typeof exports !== 'undefined') {
   exports.GSBigQuery = loadGSBigQuery();
+}// カレンダーテンプレート
+// GSCalendar = loadGSCalendar();
+
+loadGSCalendar = function () {
+  var GSCalendar = function (spreadsheet, settings) {
+    this.spreadsheet = spreadsheet;
+    this.settings = settings;
+
+    // メッセージテンプレート設定 
+    this.sheet = this.spreadsheet.getSheetByName('_勤務日数');
+    if (!this.sheet) {
+      this.sheet = this.spreadsheet.insertSheet('_勤務日数');
+      if (!this.sheet) {
+        throw "エラー: メッセージシートを作れませんでした";
+      }
+    }
+  };
+
+  GSCalendar.prototype.setupCalendar = function () {
+    var settings = this.settings;
+    var startDate = this.getStartDate();
+    // 休日を設定 (iCal)
+    var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
+    var calendar = CalendarApp.getCalendarById(calendarId);
+    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
+    var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
+      return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
+    });
+    settings.set('休日', holidays.join(', '));
+    settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は再度 updateCalendar() を実行してください。');
+    endDate.setDate(endDate.getDate() - 1);
+    settings.set('最終日', DateUtils.format("Y-m-d", endDate))
+    settings.setNote('最終日', '年度の最終日。この日以降はエラーが出ます。');
+    settings.setNote('追加休日', '追加の休日です。年末年始などをカンマ区切りで入力してください。');
+    this.updateWorkdays();
+  };
+  /** setup Calendars */
+  GSCalendar.prototype.updateWorkdays = function () {
+    this.spreadsheet.deleteSheet(this.sheet);
+    this.sheet = this.spreadsheet.insertSheet('_勤務日数');
+    var startDate = this.getStartDate();
+    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
+    var holidays = this.settings.get('休日') + "," + this.settings.get('追加休日');
+    var workDays = 0;
+    var values = [];
+    while (startDate < endDate) {
+      if (startDate.getDay() == 0 || startDate.getDay() == 6 || holidays.indexOf(DateUtils.format("Y-m-d", startDate)) > -1) {
+        // holiday
+      } else {
+        workDays += 1;
+      }
+      var currentMonth = startDate.getMonth();
+      var ym = DateUtils.format("Y-m", startDate)
+      startDate.setDate(startDate.getDate() + 1);
+      if (startDate.getMonth() != currentMonth) {
+        values.push([ym, workDays]);
+        workDays = 0;
+      }
+    }
+    this.sheet.getRange(1, 1, values.length, 2).setValues(values);
+  };
+  /** getStartDate */
+  GSCalendar.prototype.getStartDate = function () {
+    var startMonth = Number(this.settings.get('開始月'));
+    if (!startMonth) {
+      startMonth = 4;
+    }
+    var startDate = new Date(DateUtils.now().getFullYear(), (startMonth - 1));
+    // use last year if the referencing date is future date
+    if (startDate > new Date()) {
+      startDate = new Date(DateUtils.now().getFullYear() - 1, (startMonth - 1));
+    }
+    return startDate;
+  }
+
+  return GSCalendar;
+};
+
+
+if (typeof exports !== 'undefined') {
+  exports.GSCalendar = loadGSCalendar();
 }// KVS
 
 loadGSProperties = function (exports) {
@@ -743,7 +888,8 @@ var initLibraries = function () {
   if (typeof Timesheets === 'undefined') Timesheets = loadTimesheets();
   if (typeof Slack === 'undefined') Slack = loadSlack();
   if (typeof GSBigQuery === 'undefined') GSBigQuery = loadGSBigQuery();
-}
+  if (typeof GSCalendar === 'undefined') GSCalendar = loadGSCalendar();
+};
 
 var init = function () {
   initLibraries();
@@ -824,17 +970,11 @@ function setUp() {
     settings.setNote('開始日', '変更はしないでください');
     settings.set('無視するユーザ', 'miyamoto,hubot,slackbot,incoming-webhook');
     settings.setNote('無視するユーザ', '反応をしないユーザを,区切りで設定する。botは必ず指定してください。');
+    settings.set('開始月', 4);
+    settings.setNote('開始月', '年度の開始月。変更したら updateCalendar 関数を実行してください');
 
-    // 休日を設定 (iCal)
-    var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
-    var calendar = CalendarApp.getCalendarById(calendarId);
-    var startDate = DateUtils.now();
-    var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
-    var holidays = _.map(calendar.getEvents(startDate, endDate), function (ev) {
-      return DateUtils.format("Y-m-d", ev.getAllDayStartDate());
-    });
-    settings.set('休日', holidays.join(', '));
-    settings.setNote('休日', '日付を,区切りで。来年までは自動設定されているので、以後は適当に更新してください');
+    var calender = new GSCalendar(spreadsheet, settings);
+    calender.setupCalendar();
 
     // メッセージ用のシートを作成
     new GSTemplate(spreadsheet);
@@ -861,6 +1001,30 @@ function setUp() {
       .create();
   }
 };
+/** update calendar */
+function updateCalendar() {
+  var miyamoto = init();
+  initLibraries();
+  var global_settings = new GASProperties();
+  var spreadsheetId = global_settings.get('spreadsheet');
+  if (spreadsheetId) {
+    spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    settings = new GSProperties(spreadsheet);
+  } else {
+    console.error("Spreadsheet is not initialized");
+    return;
+  }
+  var calender = new GSCalendar(spreadsheet, settings);
+  calender.setupCalendar();
+
+  if (global_settings.get('bigQueryProjectID') && global_settings.get('bigQueryDatasetID')) {
+    bigquery = new GSBigQuery(spreadsheet, {
+      projectID: global_settings.get('bigQueryProjectID'),
+      datasetID: global_settings.get('bigQueryDatasetID')
+    });
+    bigquery.pushWorkDays();
+  }
+}
 
 /* バージョンアップ処理を行う */
 function migrate() {
