@@ -94,7 +94,9 @@ function setUp() {
     settings.set('開始月', 4);
     settings.setNote('開始月', '年度の開始月。変更したら updateCalendar 関数を実行してください');
 
-    updateCalendar(spreadsheet, settings);
+    var calender = new GSCalendar(spreadsheet, settings);
+    calender.setupCalendar();
+
     // メッセージ用のシートを作成
     new GSTemplate(spreadsheet);
 
@@ -121,21 +123,28 @@ function setUp() {
   }
 };
 /** update calendar */
-function updateCalendar(spreadsheet, settings) {
-  if (!settings) {
-    initLibraries();
-    var global_settings = new GASProperties();
-    var spreadsheetId = global_settings.get('spreadsheet');
-    if (spreadsheetId) {
-      spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-      settings = new GSProperties(spreadsheet);
-    } else {
-      console.error("Spreadsheet is not initialized");
-      return;
-    }
+function updateCalendar() {
+  var miyamoto = init();
+  initLibraries();
+  var global_settings = new GASProperties();
+  var spreadsheetId = global_settings.get('spreadsheet');
+  if (spreadsheetId) {
+    spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    settings = new GSProperties(spreadsheet);
+  } else {
+    console.error("Spreadsheet is not initialized");
+    return;
   }
   var calender = new GSCalendar(spreadsheet, settings);
   calender.setupCalendar();
+
+  if (global_settings.get('bigQueryProjectID') && global_settings.get('bigQueryDatasetID')) {
+    bigquery = new GSBigQuery(spreadsheet, {
+      projectID: global_settings.get('bigQueryProjectID'),
+      datasetID: global_settings.get('bigQueryDatasetID')
+    });
+    bigquery.pushWorkDays();
+  }
 }
 
 /* バージョンアップ処理を行う */

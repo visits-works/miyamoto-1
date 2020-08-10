@@ -473,10 +473,67 @@ loadGSBigQuery = function (exports) {
    * 
    * @param sheet a sheet of Spreadsheet
    */
-  GSBigQuery.prototype.pushWorkDays = function (sheet) {
+  GSBigQuery.prototype.pushWorkDays = function () {
+    var tableID = "workdays";
+    // table schema
+    var table = {
+      tableReference: {
+        projectId: this.projectID,
+        datasetId: this.datasetID,
+        tableId: tableID
+      },
+      schema: {
+        fields: [{
+            name: 'work_month',
+            type: 'string'
+          },
+          {
+            name: 'work_days',
+            type: 'integer'
+          }
+        ]
+      }
+    };
+    // remove table first
+    try {
+      BigQuery.Tables.remove(this.projectID, this.datasetID, tableID);
+    } catch (e) {}
+    table = BigQuery.Tables.insert(table, this.projectID, this.datasetID);
 
-  }
-
+    // load data as CSV format
+    var sheet = this.spreadsheet.getSheetByName('_勤務日数');
+    var range = sheet.getDataRange();
+    var blob = Utilities.newBlob(this.convWorkDayCsv(range)).setContentType('application/octet-stream');
+    // create job
+    var job = {
+      configuration: {
+        load: {
+          destinationTable: {
+            projectId: this.projectID,
+            datasetId: this.datasetID,
+            tableId: tableID
+          }
+        }
+      }
+    };
+    console.log('load data');
+    // insert data
+    job = BigQuery.Jobs.insert(job, this.projectID, blob);
+  };
+  GSBigQuery.prototype.convWorkDayCsv = function (range) {
+    try {
+      var data = range.getValues();
+      var csv = "";
+      // read every rows
+      for (var i = 0; i < data.length; i++) {
+        data[i][0] = Utilities.formatDate(data[i][0], "JST", "yyyy-MM");
+        csv += data[i].join(",") + "\r\n";
+      }
+      return csv;
+    } catch (e) {
+      Logger.log(e);
+    }
+  };
   return GSBigQuery;
 };
 
@@ -916,7 +973,9 @@ function setUp() {
     settings.set('開始月', 4);
     settings.setNote('開始月', '年度の開始月。変更したら updateCalendar 関数を実行してください');
 
-    updateCalendar(spreadsheet, settings);
+    var calender = new GSCalendar(spreadsheet, settings);
+    calender.setupCalendar();
+
     // メッセージ用のシートを作成
     new GSTemplate(spreadsheet);
 
@@ -943,21 +1002,28 @@ function setUp() {
   }
 };
 /** update calendar */
-function updateCalendar(spreadsheet, settings) {
-  if (!settings) {
-    initLibraries();
-    var global_settings = new GASProperties();
-    var spreadsheetId = global_settings.get('spreadsheet');
-    if (spreadsheetId) {
-      spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-      settings = new GSProperties(spreadsheet);
-    } else {
-      console.error("Spreadsheet is not initialized");
-      return;
-    }
+function updateCalendar() {
+  var miyamoto = init();
+  initLibraries();
+  var global_settings = new GASProperties();
+  var spreadsheetId = global_settings.get('spreadsheet');
+  if (spreadsheetId) {
+    spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    settings = new GSProperties(spreadsheet);
+  } else {
+    console.error("Spreadsheet is not initialized");
+    return;
   }
   var calender = new GSCalendar(spreadsheet, settings);
   calender.setupCalendar();
+
+  if (global_settings.get('bigQueryProjectID') && global_settings.get('bigQueryDatasetID')) {
+    bigquery = new GSBigQuery(spreadsheet, {
+      projectID: global_settings.get('bigQueryProjectID'),
+      datasetID: global_settings.get('bigQueryDatasetID')
+    });
+    bigquery.pushWorkDays();
+  }
 }
 
 /* バージョンアップ処理を行う */
