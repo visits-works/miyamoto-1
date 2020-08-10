@@ -40,7 +40,7 @@ loadGSCalendar = function () {
     this.sheet = this.spreadsheet.insertSheet('_カレンダー');
     var startDate = this.getStartDate();
     var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
-    var holidays = this.settings.get('休日') + this.settings.get('追加休日');
+    var holidays = this.settings.get('休日') + "," + this.settings.get('追加休日');
     var workDays = 0;
     var values = [];
     while (startDate < endDate) {

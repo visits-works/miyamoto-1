@@ -517,16 +517,13 @@ loadGSCalendar = function () {
     this.sheet = this.spreadsheet.insertSheet('_カレンダー');
     var startDate = this.getStartDate();
     var endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth());
-    var holidays = this.settings.get('休日') + this.settings.get('追加休日');
+    var holidays = this.settings.get('休日') + "," + this.settings.get('追加休日');
     var workDays = 0;
     var values = [];
-    console.log(holidays);
     while (startDate < endDate) {
       if (startDate.getDay() == 0 || startDate.getDay() == 6 || holidays.indexOf(DateUtils.format("Y-m-d", startDate)) > -1) {
         // holiday
       } else {
-        console.log(DateUtils.format("Y-m-d", startDate));
-        console.log(holidays.indexOf(DateUtils.format("Y-m-d", startDate)));
         workDays += 1;
       }
       var currentMonth = startDate.getMonth();
@@ -537,7 +534,6 @@ loadGSCalendar = function () {
         workDays = 0;
       }
     }
-    console.log(values)
     this.sheet.getRange(1, 1, values.length, 2).setValues(values);
   };
   /** getStartDate */
