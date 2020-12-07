@@ -1,7 +1,7 @@
 # Environment info
 
-- [Google Script](https://script.google.com/a/georepublic.de/d/1AjXYh64xSZDxWJLe8sSzU4gn2fyN5XKAaKYz5cCq9j7Djlh6tZkEKA7o/edit?usp=drive_web)
-- [Time sheet](https://docs.google.com/spreadsheets/d/12brcISXijWvdK6X3qDxk7E5fvD7D8QrJKM09DqbCR_Q/edit#gid=0)
+- [Google Script](https://script.google.com/a/code4japan.org/d/1nG3ngwnnrHxTmn0uK7VgvJfa9hCO0hV3VFsusGWVoZqyW6Rq6CDA2GTQ/edit)
+- [Time sheet](https://docs.google.com/spreadsheets/d/1RUYb4034tz8-HnW9yv1rzMwM3Sq3EXpBLlpMbPEBhqA/edit#gid=0)
 
 # 勤怠管理bot - みやもとさん
 
