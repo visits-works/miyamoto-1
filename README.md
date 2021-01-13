@@ -8,7 +8,7 @@
 - [English README](README_en.md)
 
 Google Apps Scriptで書かれた、Slack上で動く勤怠管理Bot。
-Georepublic Japan 内での利用用にカスタマイズしています。
+Code for Japan 内での利用用にカスタマイズしています。
 
 オリジナル版は[こちら](https://github.com/masuidrive/miyamoto)
 
