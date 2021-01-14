@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "outDir": "./scripts",
+    "strict": true,
+    "target": "es2017",
+    "lib": ["ES2019", "ES2020.String"],
+    "types": ["@types/google-apps-script", "@types/underscore", "@types/node"]
+  },
+  "compileOnSave": true,
+  "include": ["./scripts/*.ts", /* ".eslintrc.js" */],
+  "exclude": []
+}
