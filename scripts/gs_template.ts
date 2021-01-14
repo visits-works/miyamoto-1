@@ -86,7 +86,7 @@ export class GSTemplate {
             }).join(', ');
           }
 
-          message = message.replace('#' + i + 1, arg);
+          message = message.replace('#' + (i + 1), arg);
         }
 
         return message;
