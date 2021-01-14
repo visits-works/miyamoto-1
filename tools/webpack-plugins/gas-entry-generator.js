@@ -37,6 +37,7 @@ function createStubFunctionASTNode(functionName, leadingComments, params) {
   }
   if (params) {
     node.params = params;
+    node.body[0].arguments = params;
   }
   return node;
 }
@@ -87,7 +88,6 @@ class GlobalAssignments {
 }
 
 function _generateStubs(ast, options) {
-  const autoGlobalExports = options.autoGlobalExports;
   const entryPointFunctions = new EntryPointFunctions();
   estraverse.traverse(ast, {
     leave: function (node) {
@@ -118,7 +118,7 @@ function _generateStubs(ast, options) {
           }
         });
       }
-      if (autoGlobalExports) {
+      /* if (autoGlobalExports) {
         if (
           node.type === 'ExpressionStatement' &&
           isNamedExportsAssignmentExpression(node.expression)
@@ -146,7 +146,7 @@ function _generateStubs(ast, options) {
             }
           });
         }
-      }
+      } */
     },
   });
 
@@ -182,7 +182,7 @@ function generateStubs(ast, options) {
   return escodegen.generate(baseAST, { comment: !!options.comment });
 }
 
-function generateGlobalAssignments(ast) {
+/* function generateGlobalAssignments(ast) {
   const globalAssignments = new GlobalAssignments();
   estraverse.traverse(ast, {
     leave: (node) => {
@@ -208,7 +208,7 @@ function generateGlobalAssignments(ast) {
   const baseAST = createBaseAST();
   baseAST.body.push(...globalAssignments.getGlobalAssignments());
   return escodegen.generate(baseAST);
-}
+} */
 
 function createGlobalAssignmentASTNode(functionName) {
   const node = {
@@ -245,17 +245,11 @@ function createGlobalAssignmentASTNode(functionName) {
   return node;
 }
 
-exports.generate = function (
-  source,
-  options = { comment: false, autoGlobalExports: false }
-) {
+exports.generate = function (source, options = { comment: false }) {
   const ast = esprima.parseModule(source, { attachComment: options.comment });
   const functions = generateStubs(ast, options);
-  const globalAssignments = options.autoGlobalExports
-    ? generateGlobalAssignments(ast, options)
-    : undefined;
+
   return {
     entryPointFunctions: functions,
-    globalAssignments,
   };
 };
