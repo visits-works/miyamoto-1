@@ -52,12 +52,10 @@ export function doPost(e: any) {
     const postJSON = JSON.parse(e.postData.getDataAsString());
     // verification Slack Event
     if (postJSON.type == 'url_verification') {
-      let out = ContentService.createTextOutput();
-      //Mime TypeをJSONに設定
-      out.setMimeType(ContentService.MimeType.TEXT);
-      //JSONテキストをセットする
-      out.setContent(postJSON.challenge);
-      return out;
+      // Mime TypeをJSONに設定、 challenge をreturn（Slackの認証）
+      return ContentService.createTextOutput(postJSON.challenge).setMimeType(
+        ContentService.MimeType.TEXT
+      );
     } else if (postJSON.event.subtype != 'bot_message') {
       const miyamoto = init();
       const userid = String(postJSON.event.user);
