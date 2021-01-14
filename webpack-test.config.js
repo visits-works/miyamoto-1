@@ -6,7 +6,7 @@ const nodeExternals = require('webpack-node-externals');
 module.exports = {
   mode: 'development',
   devtool: false,
-  target: 'node10.13',
+  target: 'node',
   externals: [nodeExternals(), 'QUnit'],
   entry: {
     main: './tests/index.test.ts',
@@ -17,9 +17,9 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
-    fallback: {
-      fs: 'empty',
-    },
+  },
+  node: {
+    fs: 'empty',
   },
   module: {
     rules: [

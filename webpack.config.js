@@ -1,19 +1,18 @@
 // webpack.config.js
 const webpack = require('webpack');
+const GasPlugin = require('gas-webpack-plugin');
 
 module.exports = {
   mode: 'development',
   devtool: false,
-  target: 'node10.13',
+  target: 'node',
   entry: {
     main: './scripts/main.ts',
   },
   output: {
     path: __dirname,
     filename: 'main.gs',
-    library: {
-      type: 'commonjs',
-    },
+    libraryTarget: 'commonjs',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
@@ -27,6 +26,14 @@ module.exports = {
     ],
   },
   plugins: [
+    new GasPlugin({
+      autoGlobalExportsFiles: ['./scripts/main.ts'],
+    }),
+    new webpack.BannerPlugin({
+      banner: `var global = exports = {};`,
+      raw: true,
+      entryOnly: true,
+    }),
     new webpack.BannerPlugin({
       banner: `Miyamoto-san https://github.com/masuidrive/miyamoto/
 (c) masuidrive 2014- License: MIT
