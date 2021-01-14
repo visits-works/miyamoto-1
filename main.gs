@@ -3,22 +3,30 @@
  * (c) masuidrive 2014- License: MIT
  * -------------------
  */
-var global = exports = {};
+var exports = {};
 function migrate() {
+    return exports.migrate();
 }
 function init() {
+    return exports.init();
 }
-function doPost() {
+function doPost(e) {
+    return exports.doPost(e);
 }
 function confirmSignIn() {
+    return exports.confirmSignIn();
 }
 function confirmSignOut() {
+    return exports.confirmSignOut();
 }
 function pushToBigQuery() {
+    return exports.pushToBigQuery();
 }
 function setUp() {
+    return exports.setUp();
 }
 function updateCalendar() {
+    return exports.updateCalendar();
 }(function(e, a) { for(var i in a) e[i] = a[i]; }(exports, /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -992,7 +1000,7 @@ class GSTemplate {
                             return '<@' + u + '>';
                         }).join(', ');
                     }
-                    message = message.replace('#' + i + 1, arg);
+                    message = message.replace('#' + (i + 1), arg);
                 }
                 return message;
             }
@@ -1049,7 +1057,7 @@ class GSTimesheets {
             return sheet;
         }
         const newSheet = this.spreadsheet.insertSheet(username);
-        if (!sheet) {
+        if (!newSheet) {
             throw new Error(`エラー:  ${username}のシートが作れませんでした`);
         }
         // 中身が無い場合は新規作成
@@ -1068,17 +1076,18 @@ class GSTimesheets {
                 .setValues([cols]);
         }
         //this.on("newUser", username);
-        this._sheets[username] = sheet;
-        return sheet;
+        this._sheets[username] = newSheet;
+        return newSheet;
     }
     _getRowNo(username, date = date_utils_1.DateUtils.now()) {
         let rowNo = this.scheme.properties.length + 4;
         const startAt = date_utils_1.DateUtils.parseDate(this.settings.get('開始日'));
         const s = new Date(startAt[0], startAt[1] - 1, startAt[2], 0, 0, 0);
         rowNo +=
-            (date.getTime() - date.getTimezoneOffset() * 60 * 1000) /
-                (1000 * 24 * 60 * 60) -
-                (s.getTime() - s.getTimezoneOffset() * 60 * 1000) / (1000 * 24 * 60 * 60);
+            Math.floor((date.getTime() - date.getTimezoneOffset() * 60 * 1000) /
+                (1000 * 24 * 60 * 60)) -
+                Math.floor(s.getTime() - s.getTimezoneOffset() * 60 * 1000) /
+                    (1000 * 24 * 60 * 60);
         return rowNo;
     }
     get(username, date) {
@@ -1208,12 +1217,8 @@ function doPost(e) {
         const postJSON = JSON.parse(e.postData.getDataAsString());
         // verification Slack Event
         if (postJSON.type == 'url_verification') {
-            let out = ContentService.createTextOutput();
-            //Mime TypeをJSONに設定
-            out.setMimeType(ContentService.MimeType.TEXT);
-            //JSONテキストをセットする
-            out.setContent(postJSON.challenge);
-            return out;
+            // Mime TypeをJSONに設定、 challenge をreturn（Slackの認証）
+            return ContentService.createTextOutput(postJSON.challenge).setMimeType(ContentService.MimeType.TEXT);
         }
         else if (postJSON.event.subtype != 'bot_message') {
             const miyamoto = init();
@@ -1341,14 +1346,7 @@ function test1(e) {
   miyamoto.receiver.receiveMessage({user_name:"masuidrive", text:"hello 8:00"});
 }
 */
-global.migrate = exports.migrate;
-global.init = exports.init;
-global.doPost = exports.doPost;
-global.confirmSignIn = exports.confirmSignIn;
-global.confirmSignOut = exports.confirmSignOut;
-global.pushToBigQuery = exports.pushToBigQuery;
-global.setUp = exports.setUp;
-global.updateCalendar = exports.updateCalendar;
+
 
 /***/ }),
 
