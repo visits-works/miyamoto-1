@@ -1,5 +1,5 @@
 import QUnit from 'QUnit';
-import { EventListener } from '../scripts/event_listener';
+import { EventListener } from '../../scripts/event_listener';
 QUnit.test('EventListener', function (assert) {
   var results: string[] = [];
 

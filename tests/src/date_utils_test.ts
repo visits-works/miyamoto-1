@@ -1,7 +1,7 @@
 import QUnit from 'QUnit';
-import { DateUtils } from '../scripts/date_utils';
+import { DateUtils } from '../../scripts/date_utils';
 import { UnderscoreStatic } from 'underscore';
-const _ = require('../scripts/lib/underscorejs.js') as UnderscoreStatic;
+const _ = require('../../scripts/lib/underscorejs.js') as UnderscoreStatic;
 
 QUnit.test('DateUtils.parseTime', function (assert) {
   assert.ok(_.isEqual([13, 1], DateUtils.parseTime('13:01')), '13:01');

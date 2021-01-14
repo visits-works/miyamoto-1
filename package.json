@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "test": "webpack --config webpack-test.config.js && qunit test-bundle.js",
+    "test": "webpack --config tests/webpack-test.config.js && qunit tests/test-bundle.js",
     "upload": "npm run build && node node_modules/gas-manager/bin/gas upload -c ./gas-config.json",
     "dev": "npm run build && node node_modules/gas-manager/bin/gas upload -c ./gas-config.json -s ./gas-project-dev.json"
   },

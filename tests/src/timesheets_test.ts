@@ -1,9 +1,8 @@
 import QUnit from 'QUnit';
-import { DateUtils } from '../scripts/date_utils';
-import { Timesheets } from '../scripts/timesheets';
-// import { GSTimesheets } from '../scripts/gs_timesheets';
+import { DateUtils } from '../../scripts/date_utils';
+import { Timesheets } from '../../scripts/timesheets';
 import { UnderscoreStatic } from 'underscore';
-const _ = require('../scripts/lib/underscorejs.js') as UnderscoreStatic;
+const _ = require('../../scripts/lib/underscorejs.js') as UnderscoreStatic;
 
 QUnit.test('Timesheets', function (assert) {
   var responder = {

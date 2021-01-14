@@ -86,7 +86,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./tests/index.test.ts");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./tests/src/index.test.ts");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -729,18 +729,18 @@ exports.Timesheets = Timesheets;
 
 /***/ }),
 
-/***/ "./tests sync recursive .ts$":
-/*!*************************!*\
-  !*** ./tests sync .ts$ ***!
-  \*************************/
+/***/ "./tests/src sync recursive .ts$":
+/*!*****************************!*\
+  !*** ./tests/src sync .ts$ ***!
+  \*****************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 var map = {
-	"./date_utils_test.ts": "./tests/date_utils_test.ts",
-	"./event_listener_test.ts": "./tests/event_listener_test.ts",
-	"./index.test.ts": "./tests/index.test.ts",
-	"./timesheets_test.ts": "./tests/timesheets_test.ts"
+	"./date_utils_test.ts": "./tests/src/date_utils_test.ts",
+	"./event_listener_test.ts": "./tests/src/event_listener_test.ts",
+	"./index.test.ts": "./tests/src/index.test.ts",
+	"./timesheets_test.ts": "./tests/src/timesheets_test.ts"
 };
 
 
@@ -761,14 +761,14 @@ webpackContext.keys = function webpackContextKeys() {
 };
 webpackContext.resolve = webpackContextResolve;
 module.exports = webpackContext;
-webpackContext.id = "./tests sync recursive .ts$";
+webpackContext.id = "./tests/src sync recursive .ts$";
 
 /***/ }),
 
-/***/ "./tests/date_utils_test.ts":
-/*!**********************************!*\
-  !*** ./tests/date_utils_test.ts ***!
-  \**********************************/
+/***/ "./tests/src/date_utils_test.ts":
+/*!**************************************!*\
+  !*** ./tests/src/date_utils_test.ts ***!
+  \**************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -779,8 +779,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const QUnit_1 = __importDefault(__webpack_require__(/*! QUnit */ "QUnit"));
-const date_utils_1 = __webpack_require__(/*! ../scripts/date_utils */ "./scripts/date_utils.ts");
-const _ = __webpack_require__(/*! ../scripts/lib/underscorejs.js */ "./scripts/lib/underscorejs.js");
+const date_utils_1 = __webpack_require__(/*! ../../scripts/date_utils */ "./scripts/date_utils.ts");
+const _ = __webpack_require__(/*! ../../scripts/lib/underscorejs.js */ "./scripts/lib/underscorejs.js");
 QUnit_1.default.test('DateUtils.parseTime', function (assert) {
     assert.ok(_.isEqual([13, 1], date_utils_1.DateUtils.parseTime('13:01')), '13:01');
     assert.ok(_.isEqual([14, 2], date_utils_1.DateUtils.parseTime('2:02pm')), '2:02pm');
@@ -834,10 +834,10 @@ QUnit_1.default.test('DateUtils.parseWday', function (assert) {
 
 /***/ }),
 
-/***/ "./tests/event_listener_test.ts":
-/*!**************************************!*\
-  !*** ./tests/event_listener_test.ts ***!
-  \**************************************/
+/***/ "./tests/src/event_listener_test.ts":
+/*!******************************************!*\
+  !*** ./tests/src/event_listener_test.ts ***!
+  \******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -848,7 +848,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const QUnit_1 = __importDefault(__webpack_require__(/*! QUnit */ "QUnit"));
-const event_listener_1 = __webpack_require__(/*! ../scripts/event_listener */ "./scripts/event_listener.ts");
+const event_listener_1 = __webpack_require__(/*! ../../scripts/event_listener */ "./scripts/event_listener.ts");
 QUnit_1.default.test('EventListener', function (assert) {
     var results = [];
     var obj = new event_listener_1.EventListener();
@@ -872,26 +872,26 @@ QUnit_1.default.test('EventListener', function (assert) {
 
 /***/ }),
 
-/***/ "./tests/index.test.ts":
-/*!*****************************!*\
-  !*** ./tests/index.test.ts ***!
-  \*****************************/
+/***/ "./tests/src/index.test.ts":
+/*!*********************************!*\
+  !*** ./tests/src/index.test.ts ***!
+  \*********************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var context = __webpack_require__("./tests sync recursive .ts$");
+var context = __webpack_require__("./tests/src sync recursive .ts$");
 context.keys().forEach(context);
 module.exports = context;
 
 
 /***/ }),
 
-/***/ "./tests/timesheets_test.ts":
-/*!**********************************!*\
-  !*** ./tests/timesheets_test.ts ***!
-  \**********************************/
+/***/ "./tests/src/timesheets_test.ts":
+/*!**************************************!*\
+  !*** ./tests/src/timesheets_test.ts ***!
+  \**************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -902,9 +902,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const QUnit_1 = __importDefault(__webpack_require__(/*! QUnit */ "QUnit"));
-const date_utils_1 = __webpack_require__(/*! ../scripts/date_utils */ "./scripts/date_utils.ts");
-const timesheets_1 = __webpack_require__(/*! ../scripts/timesheets */ "./scripts/timesheets.ts");
-const _ = __webpack_require__(/*! ../scripts/lib/underscorejs.js */ "./scripts/lib/underscorejs.js");
+const date_utils_1 = __webpack_require__(/*! ../../scripts/date_utils */ "./scripts/date_utils.ts");
+const timesheets_1 = __webpack_require__(/*! ../../scripts/timesheets */ "./scripts/timesheets.ts");
+const _ = __webpack_require__(/*! ../../scripts/lib/underscorejs.js */ "./scripts/lib/underscorejs.js");
 QUnit_1.default.test('Timesheets', function (assert) {
     var responder = {
         messages: [],

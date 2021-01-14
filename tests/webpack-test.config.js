@@ -9,7 +9,7 @@ module.exports = {
   target: 'node',
   externals: [nodeExternals(), 'QUnit'],
   entry: {
-    main: './tests/index.test.ts',
+    main: './tests/src/index.test.ts',
   },
   output: {
     path: __dirname,
