@@ -9,7 +9,7 @@ import { Slack } from './slack';
 import { GSBigQuery } from './gs_bigquery';
 import { GSCalendar } from './gs_calendar';
 
-function init() {
+export function init() {
   const global_settings = new GASProperties();
 
   const spreadsheetId = global_settings.get('spreadsheet');
@@ -46,7 +46,7 @@ function init() {
 }
 
 // SlackのOutgoingから来るメッセージ
-function doPost(e: any) {
+export function doPost(e: any) {
   if (e.parameters.user_name == undefined) {
     // data is undefined (Slack Event)
     const postJSON = JSON.parse(e.postData.getDataAsString());
@@ -81,18 +81,18 @@ function doPost(e: any) {
 }
 
 // Time-based triggerで実行
-function confirmSignIn() {
+export function confirmSignIn() {
   const miyamoto = init();
   miyamoto!.timesheets.confirmSignIn();
 }
 
 // Time-based triggerで実行
-function confirmSignOut() {
+export function confirmSignOut() {
   const miyamoto = init();
   miyamoto!.timesheets.confirmSignOut();
 }
 
-function pushToBigQuery() {
+export function pushToBigQuery() {
   const miyamoto = init();
   if (miyamoto!.bigquery) {
     miyamoto!.bigquery.pushTables();
@@ -100,7 +100,7 @@ function pushToBigQuery() {
 }
 
 // 初期化する
-function setUp() {
+export function setUp() {
   // spreadsheetが無かったら初期化
   const global_settings = new GASProperties();
   if (!global_settings.get('spreadsheet')) {
@@ -160,7 +160,7 @@ function setUp() {
   }
 }
 /** update calendar */
-function updateCalendar() {
+export function updateCalendar() {
   // const miyamoto = init();
 
   const global_settings = new GASProperties();
@@ -191,20 +191,11 @@ function updateCalendar() {
 }
 
 /* バージョンアップ処理を行う */
-function migrate() {
+export function migrate() {
   const global_settings = new GASProperties();
   global_settings.set('version', '::VERSION::');
   console.log('バージョンアップが完了しました。');
 }
-
-/* TS6133 エラー回避用 - 関数を呼び出さずに言及 */
-doPost;
-confirmSignIn;
-confirmSignOut;
-pushToBigQuery;
-setUp;
-updateCalendar;
-migrate;
 
 /*
 function test1(e) {
