@@ -27,7 +27,27 @@ function createStubFunctionASTNode(functionName, leadingComments, params) {
     defaults: [],
     body: {
       type: 'BlockStatement',
-      body: [],
+      body: [
+        {
+          type: 'ReturnStatement',
+          argument: {
+            type: 'CallExpression',
+            callee: {
+              type: 'MemberExpression',
+              computed: false,
+              object: {
+                type: 'Identifier',
+                name: 'exports',
+              },
+              property: {
+                type: 'Identifier',
+                name: functionName,
+              },
+            },
+            arguments: [],
+          },
+        },
+      ],
     },
     generator: false,
     expression: false,
@@ -37,7 +57,7 @@ function createStubFunctionASTNode(functionName, leadingComments, params) {
   }
   if (params) {
     node.params = params;
-    node.body[0].arguments = params;
+    node.body.body[0].argument.arguments = params;
   }
   return node;
 }
@@ -71,77 +91,33 @@ class EntryPointFunctions {
 function _generateStubs(ast, options) {
   const entryPointFunctions = new EntryPointFunctions();
   estraverse.traverse(ast, {
-    leave: function (node) {
+    leave: function (node, parent) {
+      if (!options.isEntrypointFile) return;
+
       if (
         node.type === 'ExpressionStatement' &&
-        isGlobalAssignmentExpression(node.expression)
+        isNamedExportsAssignmentExpression(node.expression)
       ) {
         const functionName = node.expression.left.property.name;
-        entryPointFunctions.add(
-          functionName,
-          node.expression.right.params,
-          node.leadingComments
-        );
-      } else if (
-        node.type === 'ExpressionStatement' &&
-        node.expression.type === 'SequenceExpression'
-      ) {
-        node.expression.expressions.forEach(function (expression) {
-          if (isGlobalAssignmentExpression(expression)) {
-            const functionName = expression.left.property.name;
+        if (parent && parent.body) {
+          const functionDeclaration = parent.body.find(
+            (sibiling) =>
+              sibiling.type === 'FunctionDeclaration' &&
+              sibiling.id.name === functionName
+          );
+          if (functionDeclaration) {
             entryPointFunctions.add(
               functionName,
-              expression.right.params,
-              expression.leadingComments
-                ? expression.leadingComments
-                : node.leadingComments
+              functionDeclaration.params,
+              node.leadingComments
             );
           }
-        });
-      }
-      /* if (autoGlobalExports) {
-        if (
-          node.type === 'ExpressionStatement' &&
-          isNamedExportsAssignmentExpression(node.expression)
-        ) {
-          const functionName = node.expression.left.property.name;
-          entryPointFunctions.add(
-            functionName,
-            node.expression.right.params,
-            node.leadingComments
-          );
-        } else if (
-          node.type === 'ExpressionStatement' &&
-          node.expression.type === 'SequenceExpression'
-        ) {
-          node.expression.expressions.forEach(function (expression) {
-            if (isNamedExportsAssignmentExpression(expression)) {
-              const functionName = expression.left.property.name;
-              entryPointFunctions.add(
-                functionName,
-                expression.right.params,
-                expression.leadingComments
-                  ? expression.leadingComments
-                  : node.leadingComments
-              );
-            }
-          });
         }
-      } */
+      }
     },
   });
 
   return entryPointFunctions.getEntryPointFunctions();
-}
-
-function isGlobalAssignmentExpression(node) {
-  return (
-    node.type === 'AssignmentExpression' &&
-    node.operator === '=' &&
-    node.left.type === 'MemberExpression' &&
-    node.left.object.type === 'Identifier' &&
-    node.left.object.name === 'global'
-  );
 }
 
 function isNamedExportsAssignmentExpression(node) {
@@ -163,7 +139,10 @@ function generateStubs(ast, options) {
   return escodegen.generate(baseAST, { comment: !!options.comment });
 }
 
-exports.generate = function (source, options = { comment: false }) {
+exports.generate = function (
+  source,
+  options = { comment: false, isEntrypointFile: false }
+) {
   const ast = esprima.parseModule(source, { attachComment: options.comment });
   const functions = generateStubs(ast, options);
 

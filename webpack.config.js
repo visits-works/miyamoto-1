@@ -1,6 +1,6 @@
 // webpack.config.js
 const webpack = require('webpack');
-const GasPlugin = require('gas-webpack-plugin');
+const GasPlugin = require('./tools/webpack-plugins/gas-webpack-plugin.js');
 
 module.exports = {
   mode: 'development',
@@ -27,10 +27,10 @@ module.exports = {
   },
   plugins: [
     new GasPlugin({
-      autoGlobalExportsFiles: ['./scripts/main.ts'],
+      // autoGlobalExportsFiles: ['./scripts/main.ts'],
     }),
     new webpack.BannerPlugin({
-      banner: `var global = exports = {};`,
+      banner: `var exports = {};`,
       raw: true,
       entryOnly: true,
     }),

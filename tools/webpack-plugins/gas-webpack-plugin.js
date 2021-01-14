@@ -13,6 +13,7 @@ const path = require('path');
 
 const defaultOptions = {
   comment: true,
+  entrypointFilename: '',
 };
 
 function GasPlugin(options) {
@@ -56,6 +57,7 @@ class GasDependency extends Dependency {
 GasDependency.Template = class GasDependencyTemplate {
   constructor(options) {
     this.comment = options.comment;
+    this.entrypointFilename = options.entrypointFilename;
     this.entryFunctions = new Map();
   }
 
@@ -63,8 +65,8 @@ GasDependency.Template = class GasDependencyTemplate {
     const module = dep.module;
     const options = {
       comment: this.comment,
-      /* module.resource &&
-        this.patterns.some((file) => minimatch(module.resource, file)), */
+      isEntrypointFile:
+        module.resource && minimatch(module.resource, this.entrypointFilename),
     };
     const output = generate(source.source(), options);
     this.entryFunctions.set(module.id, output);
@@ -74,10 +76,15 @@ GasDependency.Template = class GasDependencyTemplate {
 GasPlugin.prototype.apply = function (compiler) {
   const context = compiler.options.context;
 
+  const entrypointFilename = path.isAbsolute(compiler.options.entry.main)
+    ? compiler.options.entry.main
+    : path.resolve(context, compiler.options.entry.main);
+
   const plugin = { name: 'GasPlugin' };
   const compilationHook = (compilation) => {
     const gasDependencyTemplate = new GasDependency.Template({
       comment: this.options.comment,
+      entrypointFilename,
     });
 
     compilation.dependencyTemplates.set(GasDependency, gasDependencyTemplate);
