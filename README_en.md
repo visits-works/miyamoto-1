@@ -58,7 +58,7 @@ See issues
 
 ```
 npm install
-make test
+npm run test
 ```
 
 ## Files

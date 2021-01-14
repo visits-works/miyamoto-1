@@ -103,7 +103,7 @@ Please see [DEVELOPMENT.md](DEVELOPMENT.md) for the development details.
 
 ```
 npm install
-make test
+npm run test
 ```
 
 ## ソースコード/Source codes
