@@ -68,25 +68,6 @@ class EntryPointFunctions {
   }
 }
 
-class GlobalAssignments {
-  constructor() {
-    this.stubs = [];
-    this.functionNames = new Set();
-  }
-
-  add(functionName) {
-    if (this.functionNames.has(functionName)) {
-      return;
-    }
-    this.functionNames.add(functionName);
-    this.stubs.push(createGlobalAssignmentASTNode(functionName));
-  }
-
-  getGlobalAssignments() {
-    return this.stubs;
-  }
-}
-
 function _generateStubs(ast, options) {
   const entryPointFunctions = new EntryPointFunctions();
   estraverse.traverse(ast, {
@@ -180,69 +161,6 @@ function generateStubs(ast, options) {
   const stubs = _generateStubs(ast, options);
   baseAST.body.push(...stubs);
   return escodegen.generate(baseAST, { comment: !!options.comment });
-}
-
-/* function generateGlobalAssignments(ast) {
-  const globalAssignments = new GlobalAssignments();
-  estraverse.traverse(ast, {
-    leave: (node) => {
-      if (
-        node.type === 'ExpressionStatement' &&
-        isNamedExportsAssignmentExpression(node.expression)
-      ) {
-        const functionName = node.expression.left.property.name;
-        globalAssignments.add(functionName);
-      } else if (
-        node.type === 'ExpressionStatement' &&
-        node.expression.type === 'SequenceExpression'
-      ) {
-        node.expression.expressions.forEach(function (expression) {
-          if (isNamedExportsAssignmentExpression(expression)) {
-            const functionName = expression.left.property.name;
-            globalAssignments.add(functionName);
-          }
-        });
-      }
-    },
-  });
-  const baseAST = createBaseAST();
-  baseAST.body.push(...globalAssignments.getGlobalAssignments());
-  return escodegen.generate(baseAST);
-} */
-
-function createGlobalAssignmentASTNode(functionName) {
-  const node = {
-    type: 'ExpressionStatement',
-    expression: {
-      type: 'AssignmentExpression',
-      operator: '=',
-      left: {
-        type: 'MemberExpression',
-        computed: false,
-        object: {
-          type: 'Identifier',
-          name: 'global',
-        },
-        property: {
-          type: 'Identifier',
-          name: functionName,
-        },
-      },
-      right: {
-        type: 'MemberExpression',
-        computed: false,
-        object: {
-          type: 'Identifier',
-          name: 'exports',
-        },
-        property: {
-          type: 'Identifier',
-          name: functionName,
-        },
-      },
-    },
-  };
-  return node;
 }
 
 exports.generate = function (source, options = { comment: false }) {
