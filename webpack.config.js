@@ -26,9 +26,7 @@ module.exports = {
     ],
   },
   plugins: [
-    new GasPlugin({
-      // autoGlobalExportsFiles: ['./scripts/main.ts'],
-    }),
+    new GasPlugin({}),
     new webpack.BannerPlugin({
       banner: `var exports = {};`,
       raw: true,
