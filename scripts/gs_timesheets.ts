@@ -47,7 +47,7 @@ export class GSTimesheets {
     }
 
     const newSheet = this.spreadsheet.insertSheet(username);
-    if (!sheet) {
+    if (!newSheet) {
       throw new Error(`エラー:  ${username}のシートが作れませんでした`);
     }
 
@@ -72,18 +72,21 @@ export class GSTimesheets {
         .setValues([cols]);
     }
     //this.on("newUser", username);
-    this._sheets[username] = sheet;
+    this._sheets[username] = newSheet;
 
-    return sheet;
+    return newSheet;
   }
   private _getRowNo(username: string, date: Date = DateUtils.now()) {
     let rowNo = this.scheme.properties.length + 4;
     const startAt = DateUtils.parseDate(this.settings.get('開始日')!);
     const s = new Date(startAt![0], startAt![1] - 1, startAt![2], 0, 0, 0);
     rowNo +=
-      (date.getTime() - date.getTimezoneOffset() * 60 * 1000) /
-        (1000 * 24 * 60 * 60) -
-      (s.getTime() - s.getTimezoneOffset() * 60 * 1000) / (1000 * 24 * 60 * 60);
+      Math.floor(
+        (date.getTime() - date.getTimezoneOffset() * 60 * 1000) /
+          (1000 * 24 * 60 * 60)
+      ) -
+      Math.floor(s.getTime() - s.getTimezoneOffset() * 60 * 1000) /
+        (1000 * 24 * 60 * 60);
     return rowNo;
   }
   get(username: string, date: Date) {
