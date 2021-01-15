@@ -51,7 +51,7 @@ Replace `fileId` field of `gas-project-dev.json` with the `FILE_ID` value.
 Run below command
 
 ```
-% make dev
+% npm run dev
 ```
 
 It will deploy new Google Apps Script to the App script.
