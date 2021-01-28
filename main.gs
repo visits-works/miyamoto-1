@@ -1453,7 +1453,7 @@ class Timesheets {
         const commands = [
             [
                 'actionSignOut',
-                /(バ[ー〜ァ]*イ|ば[ー〜ぁ]*い|おやすみ|お[つっ]ー|おつ|さらば|お先|お疲|帰|乙|bye|night|(c|see)\s*(u|you)|left|退勤|ごきげんよ|グ[ッ]?バイ)/,
+                /(バ[ー〜ァ]*イ|ば[ー〜ぁ]*い|おやすみ|お[つっ]ー|おつ|さらば|お先|お疲|帰|乙|bye|night|(c|see)\s*(u|you)|left|退勤|ごきげんよ|グ[ッ]?バイ|終了|終わり|おわり)/,
             ],
             ['actionWhoIsOff', /(だれ|誰|who\s*is).*(休|やす(ま|み|む))/],
             ['actionWhoIsIn', /(だれ|誰|who\s*is)/],
@@ -1465,7 +1465,7 @@ class Timesheets {
             ['actionOff', /(休|やす(ま|み|む)|休暇)/],
             [
                 'actionSignIn',
-                /(モ[ー〜]+ニン|も[ー〜]+にん|おっは|おは|へろ|はろ|ヘロ|ハロ|hi|hello|morning|ohayo|出勤)/,
+                /(モ[ー〜]+ニン|も[ー〜]+にん|おっは|おは|へろ|はろ|ヘロ|ハロ|hi|hello|morning|ohayo|出勤|開始|始め|はじめ)/,
             ],
             ['confirmSignIn', /__confirmSignIn__/],
             ['confirmSignOut', /__confirmSignOut__/],
