@@ -1457,7 +1457,6 @@ class Timesheets {
             ],
             ['actionWhoIsOff', /(だれ|誰|who\s*is).*(休|やす(ま|み|む))/],
             ['actionWhoIsIn', /(だれ|誰|who\s*is)/],
-            ['actionBreak', /(休憩|break)/],
             [
                 'actionCancelOff',
                 /(休|やす(ま|み|む)|休暇).*(キャンセル|消|止|やめ|ません)/,
@@ -1513,18 +1512,7 @@ class Timesheets {
             this.storage.set(username, this.datetime, {
                 signOut: this.datetime,
             });
-            // 5時間以上働いていて、休憩が入っていなければ休憩を更新する
-            if (!data.break &&
-                this.datetime.getTime() - data.signIn > 5 * 60 * 60 * 1000) {
-                // break 入力
-                this.storage.set(username, this.datetime, {
-                    break: 60,
-                });
-                this.responder.template('退勤と休憩', username, this.datetimeStr);
-            }
-            else {
-                this.responder.template('退勤', username, this.datetimeStr);
-            }
+            this.responder.template('退勤', username, this.datetimeStr);
         }
         else {
             // 更新の場合は時間を明示する必要がある
@@ -1532,18 +1520,7 @@ class Timesheets {
                 this.storage.set(username, this.datetime, {
                     signOut: this.datetime,
                 });
-                // 5時間以上働いていて、休憩が入っていなければ休憩を更新する
-                if (!data.break &&
-                    this.datetime.getTime() - data.signIn > 5 * 60 * 60 * 1000) {
-                    // break 入力
-                    this.storage.set(username, this.datetime, {
-                        break: 60,
-                    });
-                    this.responder.template('退勤更新と休憩', username, this.datetimeStr);
-                }
-                else {
-                    this.responder.template('退勤更新', username, this.datetimeStr);
-                }
+                this.responder.template('退勤更新', username, this.datetimeStr);
             }
         }
     }
