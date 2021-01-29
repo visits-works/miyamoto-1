@@ -3,7 +3,6 @@ import { GSTimesheets } from './gs_timesheets';
 import { GSProperties } from './gs_properties';
 import { Responder } from './slack';
 import { DateUtils } from './date_utils';
-import { checkUpdate } from './gas_utils';
 import { UnderscoreStatic } from 'underscore';
 const _ = require('./lib/underscorejs') as UnderscoreStatic;
 
@@ -251,9 +250,6 @@ export class Timesheets {
     if (!_.isEmpty(users)) {
       this.responder.template('出勤確認', users.sort());
     }
-
-    // バージョンチェックを行う
-    checkUpdate(this.responder);
   }
   // 退勤していない人にメッセージを送る
   confirmSignOut(_username?: string, _message?: unknown) {

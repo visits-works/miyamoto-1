@@ -56,7 +56,7 @@ export function doPost(e: any) {
       return ContentService.createTextOutput(postJSON.challenge).setMimeType(
         ContentService.MimeType.TEXT
       );
-    } else if (postJSON.event.subtype != 'bot_message') {
+    } else if (postJSON.event.subtype != 'bot_message' && postJSON.event.subtype != 'bot_remove') {
       const miyamoto = init();
       const userid = String(postJSON.event.user);
       const body = String(postJSON.event.text);

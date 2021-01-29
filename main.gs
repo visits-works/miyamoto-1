@@ -426,50 +426,6 @@ exports.GASProperties = GASProperties;
 
 /***/ }),
 
-/***/ "./scripts/gas_utils.ts":
-/*!******************************!*\
-  !*** ./scripts/gas_utils.ts ***!
-  \******************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// Google Apps Script専用ユーティリティ
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkUpdate = void 0;
-const gas_properties_1 = __webpack_require__(/*! ./gas_properties */ "./scripts/gas_properties.ts");
-// GASのログ出力をブラウザ互換にする
-if (typeof console === 'undefined' && typeof Logger !== 'undefined') {
-    // @ts-ignore
-    console = {};
-    console.log = function (...args) {
-        Logger.log(args.join(', '));
-    };
-}
-// サーバに新しいバージョンが無いかチェックする
-function checkUpdate(responder) {
-    const current_version = parseFloat(new gas_properties_1.GASProperties().get('version') || '0');
-    const response = UrlFetchApp.fetch('https://raw.githubusercontent.com/georepublic/miyamoto/master/VERSION', { muteHttpExceptions: true });
-    if (response.getResponseCode() === 200) {
-        const latest_version = parseFloat(response.getContentText());
-        if (latest_version > 0 && latest_version > current_version) {
-            responder.send('Timesheet Script was updated. \nhttps://github.com/georepublic/miyamoto/blob/master/UPDATE.md を読んでください。');
-            const response = UrlFetchApp.fetch('https://raw.githubusercontent.com/georepublic/miyamoto/master/HISTORY.md', { muteHttpExceptions: true });
-            if (response.getResponseCode() === 200) {
-                const text = response
-                    .getContentText()
-                    .replace(new RegExp('## ' + current_version + '[\\s\\S]*', 'm'), '');
-                responder.send(text);
-            }
-        }
-    }
-}
-exports.checkUpdate = checkUpdate;
-
-
-/***/ }),
-
 /***/ "./scripts/gs_bigquery.ts":
 /*!********************************!*\
   !*** ./scripts/gs_bigquery.ts ***!
@@ -1220,7 +1176,7 @@ function doPost(e) {
             // Mime TypeをJSONに設定、 challenge をreturn（Slackの認証）
             return ContentService.createTextOutput(postJSON.challenge).setMimeType(ContentService.MimeType.TEXT);
         }
-        else if (postJSON.event.subtype != 'bot_message') {
+        else if (postJSON.event.subtype != 'bot_message' && postJSON.event.subtype != 'bot_remove') {
             const miyamoto = init();
             const userid = String(postJSON.event.user);
             const body = String(postJSON.event.text);
@@ -1420,7 +1376,6 @@ exports.Slack = Slack;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Timesheets = void 0;
 const date_utils_1 = __webpack_require__(/*! ./date_utils */ "./scripts/date_utils.ts");
-const gas_utils_1 = __webpack_require__(/*! ./gas_utils */ "./scripts/gas_utils.ts");
 const _ = __webpack_require__(/*! ./lib/underscorejs */ "./scripts/lib/underscorejs.js");
 class Timesheets {
     constructor(storage, settings, responder) {
@@ -1632,8 +1587,6 @@ class Timesheets {
         if (!_.isEmpty(users)) {
             this.responder.template('出勤確認', users.sort());
         }
-        // バージョンチェックを行う
-        gas_utils_1.checkUpdate(this.responder);
     }
     // 退勤していない人にメッセージを送る
     confirmSignOut(_username, _message) {
