@@ -127,7 +127,7 @@ export class DateUtils {
       ];
     }
 
-    if (str.match(/(今日|today)/)) {
+    if (str.match(/(今日|本日|today)/)) {
       return [
         this.now().getFullYear(),
         this.now().getMonth() + 1,
